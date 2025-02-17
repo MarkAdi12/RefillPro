@@ -20,6 +20,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   List<Map<String, dynamic>> _trackingOrders = [];
+  Map<int, Map<String, dynamic>> _paymentData =
+      {}; // Store payment data for each order
 
   @override
   void initState() {
@@ -48,7 +50,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       List<Map<String, dynamic>> orders = [];
 
       for (var order in items) {
-        if (order['status'] != 0) continue; // Only track pending orders
+        if (order['status'] != 0) continue;
+
+        // Fetch payment data for the order
+        final paymentData =
+            await _orderListService.retrievePayment(token, order['id']);
+        if (paymentData != null) {
+          _paymentData[order['id']] = paymentData; // Store payment data
+        }
 
         List<Map<String, dynamic>> orderItems = [];
         for (var item in order['order_details']) {
@@ -119,12 +128,33 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               customerName: order['customerName'],
                               status: order['status'],
                               orderItems: order['orderItems'],
+                              paymentStatus: _getPaymentStatus(
+                                  int.parse(order['orderNo'])),
                             ),
                           ],
                         );
                       },
                     ),
     );
+  }
+
+  String _getPaymentStatus(int orderId) {
+    final paymentData = _paymentData[orderId];
+
+    if (paymentData == null || paymentData['status'] == null) {
+      return "Cash on Delivery";
+    } else {
+      switch (paymentData['status']) {
+        case 1:
+          return "Paid Online";
+        case 0:
+          return "Pending";
+        case 2:
+          return "Payment Failed";
+        default:
+          return "Unknown Status";
+      }
+    }
   }
 
   Widget _buildLocationContainer(

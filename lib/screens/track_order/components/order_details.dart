@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../checkout/components/payment_form.dart';
 
 class OrderDetails extends StatelessWidget {
   final int currentStep;
@@ -7,7 +8,8 @@ class OrderDetails extends StatelessWidget {
   final String customerName;
   final String status;
   final List<Map<String, dynamic>> orderItems;
-  
+  final String paymentStatus;
+
   const OrderDetails({
     super.key,
     required this.currentStep,
@@ -15,6 +17,7 @@ class OrderDetails extends StatelessWidget {
     required this.customerName,
     required this.status,
     required this.orderItems,
+    required this.paymentStatus,
   });
 
   @override
@@ -143,14 +146,33 @@ class OrderDetails extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text('Payment:'),
+              Spacer(),
+              InkWell(
+                onTap: () {
+                  if (paymentStatus == "Payment Failed") {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentForm(orderID: int.parse(orderNo))));
+                  }
+                },
+                child: Text(
+                  paymentStatus == "Payment Failed" ? 'Retry Payment' : paymentStatus,
+                  style: TextStyle(
+                    color: paymentStatus == "Payment Failed"
+                        ? Colors.red
+                        : Colors.black, 
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           Divider(thickness: 1, color: Colors.grey[300]),
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: currentStep >= 1
-                  ? null
-                  : () {},
+              onPressed: currentStep >= 1 ? null : () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: currentStep >= 1 ? Colors.grey : Colors.red,
               ),

@@ -51,8 +51,6 @@ class _PaymentFormState extends State<PaymentForm> {
       return;
     }
 
-    print("Submitting payment with token: $token");
-
     bool success = await PaymentService.submitPayment(
       orderId: widget.orderID,
       amount: amountController.text,
@@ -65,8 +63,8 @@ class _PaymentFormState extends State<PaymentForm> {
 
     if (success) {
       Get.snackbar("Success", "Payment submitted successfully.",
-          backgroundColor: Colors.green, colorText: Colors.white);
-      paymentController.clearPaymentData(); // Clear form after success
+      backgroundColor: Colors.green, colorText: Colors.white);
+      paymentController.clearPaymentData(); 
       amountController.clear();
       Navigator.pushReplacement(
         context,

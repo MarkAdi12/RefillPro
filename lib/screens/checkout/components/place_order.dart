@@ -1,7 +1,9 @@
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
-import '../../../services/place_order_service.dart';
+import '../../../services/order_list_service.dart';
+import '../../../services/order_service.dart';
 import 'order_success.dart';
 import 'payment_form.dart';
 import 'package:customer_frontend/controller/cart_controller.dart';
@@ -9,6 +11,11 @@ import 'package:customer_frontend/controller/payment_controller.dart';
 
 class PlaceOrderCard extends StatelessWidget {
   const PlaceOrderCard({super.key});
+
+  Future<bool> _hasPendingOrder(String accessToken) async {
+    final orders = await OrderListService().fetchOrders(accessToken);
+    return orders.any((order) => order['status'] == 0); 
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +55,15 @@ class PlaceOrderCard extends StatelessWidget {
                   print("No access token found!");
                   return;
                 }
+
+                // Check for pending orders before proceeding
+                bool hasPendingOrder = await _hasPendingOrder(accessToken);
+                if (hasPendingOrder) {
+                  // Show dialog if there's a pending order
+                  _showPendingOrderDialog(context);
+                  return;
+                }
+
                 // ✅ Show Loading Dialog
                 showDialog(
                   context: context,
@@ -58,7 +74,8 @@ class PlaceOrderCard extends StatelessWidget {
                     );
                   },
                 );
-                //  Call API
+
+                //  Call API to place order
                 try {
                   int? orderId = await PlaceOrderService.placeOrder(accessToken);
                   if (orderId == null) {
@@ -100,6 +117,29 @@ class PlaceOrderCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showPendingOrderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent tapping outside the dialog to dismiss
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Cannot Place Order", style: TextStyle(fontSize: 16)),
+          content: const Text(
+            "You cannot place a new order because you have a pending order. Please complete or cancel your existing order.",
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const InitScreen()));
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

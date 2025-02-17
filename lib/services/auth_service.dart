@@ -36,7 +36,7 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>?> getUser (String accessToken) async {
+  Future<Map<String, dynamic>?> getUser(String accessToken) async {
     final response = await http.get(
       Uri.parse(userUrl),
       headers: {
@@ -44,36 +44,50 @@ class AuthService {
         'Content-Type': 'application/json',
       },
     );
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-      
     } else {
       print('Failed to fetch user data: ${response.body}');
       return null;
     }
   }
 
-
-final String logoutUrl = 'https://refillpro.store/api/v1/logout/';
-
-Future<bool> logout(String token) async {
-  final response = await http.post(
-    Uri.parse(logoutUrl),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-  );
-
-  print('Logout response: ${response.body}'); // Debugging
-
-  if (response.statusCode == 200) { // Ensure we check the status code
-    print('Logout successful');
-    return true; // Indicate success
-  } else {
-    print('Logout failed: ${response.body}');
-    return false; // Indicate failure
+  // Edit User Details
+  Future<Map<String, dynamic>?> editUser(String accessToken, Map<String, dynamic> updatedData) async {
+    final response = await http.post(
+      Uri.parse(userUrl),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(updatedData), // Send the updated user data in the request body
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body); // Return updated user data
+    } else {
+      print('Failed to update user data: ${response.body}');
+      return null;
+    }
   }
-}
+
+  final String logoutUrl = 'https://refillpro.store/api/v1/logout/';
+  Future<bool> logout(String token) async {
+    final response = await http.post(
+      Uri.parse(logoutUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('Logout response: ${response.body}'); // Debugging
+
+    if (response.statusCode == 200) {
+      print('Logout successful');
+      return true; // Indicate success
+    } else {
+      print('Logout failed: ${response.body}');
+      return false; // Indicate failure
+    }
+  }
 }
