@@ -1,3 +1,4 @@
+import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:customer_frontend/screens/track_order/components/order_status.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../services/order_list_service.dart';
 import '../../services/auth_service.dart';
 import 'components/order_details.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({super.key});
@@ -16,18 +18,45 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final OrderListService _orderListService = OrderListService();
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
 
   bool _isLoading = true;
   String? _errorMessage;
   List<Map<String, dynamic>> _trackingOrders = [];
-  Map<int, Map<String, dynamic>> _paymentData =
-      {}; // Store payment data for each order
+  Map<int, Map<String, dynamic>> _paymentData = {};
+  double _riderLat = 0.0;
+  double _riderLong = 0.0;
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
+    _listenToLocationUpdates(); // Fetch rider location from Firebase
   }
+
+void _listenToLocationUpdates() {
+  DatabaseReference locationRef = _database.ref('location');
+
+  locationRef.onValue.listen((DatabaseEvent event) {
+    DataSnapshot snapshot = event.snapshot;
+
+    if (snapshot.exists && snapshot.value is Map) {
+      Map<dynamic, dynamic> locationData = snapshot.value as Map;
+
+      double lat = (locationData['lat'] as num).toDouble();
+      double long = (locationData['long'] as num).toDouble();
+
+      setState(() {
+        _riderLat = lat;
+        _riderLong = long;
+      });
+
+      print('Updated Location: $lat, $long');
+    } else {
+      print('No location data found in Firebase');
+    }
+  });
+}
 
   Future<void> _fetchOrders() async {
     String? token = await _secureStorage.read(key: 'access_token');
@@ -73,8 +102,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           'status': order['status'] == 0 ? "Pending" : "Completed",
           'customerLat': double.parse(order['customer']['lat']),
           'customerLong': double.parse(order['customer']['long']),
-          'riderLat': double.parse(order['assigned_to']['lat']),
-          'riderLong': double.parse(order['assigned_to']['long']),
           'orderItems': orderItems,
         });
       }
@@ -104,7 +131,29 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           : _errorMessage != null
               ? Center(child: Text(_errorMessage!))
               : _trackingOrders.isEmpty
-                  ? const Center(child: Text("No pending orders"))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("No Active Orders"),
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 8),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => OrderScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text('Place An Order'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _trackingOrders.length,
                       itemBuilder: (context, index) {
@@ -114,8 +163,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             _buildLocationContainer(
                               order['customerLat'],
                               order['customerLong'],
-                              order['riderLat'],
-                              order['riderLong'],
+                              _riderLat, // Rider location from Firebase
+                              _riderLong, // Rider location from Firebase
                               order['customerName'],
                             ),
                             OrderStatus(
@@ -184,10 +233,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             Marker(
               markerId: const MarkerId("rider_location"),
               position: LatLng(riderLat, riderLong),
-              infoWindow:
-                  const InfoWindow(title: "Rider", snippet: "Assigned Rider"),
+              infoWindow: InfoWindow(title: "Rider", snippet: "Assigned Rider"),
               icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueRed),
+                  BitmapDescriptor.hueViolet),
             ),
           },
         ),

@@ -12,20 +12,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
-
   final _messaging = FirebaseMessaging.instance;
   final _localNotifications = FlutterLocalNotificationsPlugin();
   bool _isFlutterLocalNotificationsInitialized = false;
 
   Future<void> initialize() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
     // Request permission
     await _requestPermission();
-
     // Setup message handlers
     await _setupMessageHandlers();
-
     // Get FCM token
     await _getAndStoreToken();
   }
@@ -61,7 +57,6 @@ class NotificationService {
       carPlay: false,
       criticalAlert: false,
     );
-
     print('Permission status: ${settings.authorizationStatus}');
   }
 
@@ -69,7 +64,6 @@ class NotificationService {
     if (_isFlutterLocalNotificationsInitialized) {
       return;
     }
-
     // android setup
     const channel = AndroidNotificationChannel(
       'high_importance_channel',
@@ -130,7 +124,6 @@ class NotificationService {
   }
 
   Future<void> _setupMessageHandlers() async {
-    // foreground message
     FirebaseMessaging.onMessage.listen((message) {
       showNotification(message);
     });

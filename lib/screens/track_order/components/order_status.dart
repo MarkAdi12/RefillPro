@@ -1,5 +1,4 @@
 // ignore_for_file: unused_local_variable
-
 import 'package:customer_frontend/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:timeline_tile/timeline_tile.dart';
@@ -31,6 +30,11 @@ class OrderStatus extends StatelessWidget {
         statusColor = Colors.red;
         statusIcon = Icons.cancel;
         break;
+      case 3:
+        statusText = "In Transit"; 
+        statusColor = Colors.orange; 
+        statusIcon = Icons.directions_car; 
+        break;
       default:
         statusText = "Unknown";
         statusColor = Colors.grey;
@@ -43,7 +47,6 @@ class OrderStatus extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Pending
             Expanded(
               child: TimelineTile(
                 axis: TimelineAxis.horizontal,
@@ -54,7 +57,7 @@ class OrderStatus extends StatelessWidget {
                   thickness: 2,
                 ),
                 afterLineStyle: LineStyle(
-                  color: status >= 0 ? statusColor : Colors.grey,
+                  color:  Colors.grey,
                   thickness: 2,
                 ),
                 indicatorStyle: IndicatorStyle(
@@ -69,6 +72,37 @@ class OrderStatus extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
                     "Pending",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+            // In Transit (New tile)
+            Expanded(
+              child: TimelineTile(
+                axis: TimelineAxis.horizontal,
+                alignment: TimelineAlign.center,
+                beforeLineStyle: LineStyle(
+                  color: status >= 3 ? statusColor : Colors.grey,
+                  thickness: 2,
+                ),
+                afterLineStyle: LineStyle(
+                  color: status > 3 ? statusColor : Colors.grey,
+                  thickness: 2,
+                ),
+                indicatorStyle: IndicatorStyle(
+                  width: 40,
+                  color: status >= 3 ? statusColor : Colors.grey,
+                  iconStyle: IconStyle(
+                    iconData: Icons.directions_car, // Icon for "In Transit"
+                    color: Colors.white,
+                  ),
+                ),
+                endChild: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "In Transit", // Text for the new tile
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),

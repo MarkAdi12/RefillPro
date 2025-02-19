@@ -110,95 +110,127 @@ class _OrderScreenState extends State<OrderScreen> {
                   itemBuilder: (context, index) {
                     var product = _products[index];
                     int quantity = 1;
+                    bool isDetailsVisible = false;
 
                     return StatefulBuilder(
                       builder: (context, setState) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                offset: const Offset(0, 4),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product['name'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: kPrimaryColor,
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              isDetailsVisible =
+                                  !isDetailsVisible; // Toggle visibility
+                            });
+                          },
+                          highlightColor:
+                              Colors.transparent, // Remove highlight color
+                          splashColor: Colors.transparent,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 20, horizontal: 16),
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  offset: const Offset(0, 4),
+                                  blurRadius: 8,
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '₱ ${product['price']}',
-                                style: const TextStyle(
-                                  fontSize: 18,
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      product['name'],
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: kPrimaryColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      '₱ ${product['price']}',
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      if (quantity > 1) {
-                                        setState(() {
-                                          quantity--;
-                                        });
-                                      }
-                                    },
-                                    icon:
-                                        const Icon(Icons.remove_circle_outline),
-                                    color: kPrimaryColor,
-                                  ),
-                                  Text(
-                                    '$quantity',
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        quantity++;
-                                      });
-                                    },
-                                    icon: const Icon(Icons.add_circle_outline),
-                                    color: kPrimaryColor,
+                                const SizedBox(height: 4),
+                                if (isDetailsVisible) ...[
+                                  SizedBox(height: 8),
+                                  Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          IconButton(
+                                            onPressed: () {
+                                              if (quantity > 1) {
+                                                setState(() {
+                                                  quantity--;
+                                                });
+                                              }
+                                            },
+                                            icon: const Icon(
+                                                Icons.remove_circle_outline),
+                                            color: kPrimaryColor,
+                                          ),
+                                          Text(
+                                            '$quantity',
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                quantity++;
+                                              });
+                                            },
+                                            icon: const Icon(
+                                                Icons.add_circle_outline),
+                                            color: kPrimaryColor,
+                                          ),
+                                          Spacer(),
+                                        ElevatedButton(
+                                        onPressed: () {
+                                          for (int i = 0; i < quantity; i++) {
+                                            cartController.addToCart(product);
+                                          }
+                                          _showAddToCartDialog(context);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: kPrimaryColor,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                          minimumSize: const Size(100,
+                                              36), // Smaller width & height
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Add to Cart',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                        ],
+                                      ),
+                                      
+                                    ],
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 10),
-                              ElevatedButton(
-                                onPressed: () {
-                                  for (int i = 0; i < quantity; i++) {
-                                    cartController.addToCart(product);
-                                  }
-                                  _showAddToCartDialog(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrimaryColor,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Add to Cart',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },

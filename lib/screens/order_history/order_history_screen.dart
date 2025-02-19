@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/order_list_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../constants.dart';
 import '../../controller/cart_controller.dart';
 import 'components/order_history_widget.dart';
 import '../../services/auth_service.dart';
+import 'package:intl/intl.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -27,71 +29,75 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     _fetchOrders();
   }
 
-Future<void> _fetchOrders() async {
-  String? token = await _secureStorage.read(key: 'access_token');
-  if (token == null) {
-    setState(() {
-      _isLoading = false;
-      _errorMessage = "No authentication token found.";
-    });
-    return;
+  String formatDateTime(dynamic dateTime) {
+    if (dateTime == null || dateTime.toString().isEmpty) {
+      return "No delivery date";
+    }
+
+    try {
+      DateTime parsedDate = DateTime.parse(dateTime.toString()).toLocal();
+      return DateFormat('MMMM dd, yyyy').format(parsedDate);
+    } catch (e) {
+      debugPrint("Error parsing date: $e");
+      return "Invalid date";
+    }
   }
 
-  try {
-    List<dynamic> items = await _orderListService.fetchOrders(token);
-    AuthService authService = AuthService();
-    Map<String, dynamic>? customerData = await authService.getUser(token);
-    String customerName = customerData != null
-        ? "${customerData['first_name']} ${customerData['last_name']}"
-        : "Unknown Customer";
+  Future<void> _fetchOrders() async {
+    String? token = await _secureStorage.read(key: 'access_token');
+    if (token == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "No authentication token found.";
+      });
+      return;
+    }
 
-    List<Map<String, dynamic>> orders = [];
+    try {
+      List<dynamic> items = await _orderListService.fetchOrders(token);
+      AuthService authService = AuthService();
+      Map<String, dynamic>? customerData = await authService.getUser(token);
+      String customerName = customerData != null
+          ? "${customerData['first_name']} ${customerData['last_name']}"
+          : "Unknown Customer";
 
-    for (var order in items) {
-      // Only include orders with status 1
-      if (order['status'] != 1) continue;
+      List<Map<String, dynamic>> orders = [];
 
-      List<Map<String, dynamic>> orderItems = [];
-      for (var item in order['order_details']) {
-        orderItems.add({
-          'id': item['product']['id'],
-          'name': item['product']['name'] ?? "Unknown Product",
-          'quantity': (item['quantity'] is int)
-              ? item['quantity']
-              : double.parse(item['quantity']).toInt(),
-          'price': (item['product']['price'] is double
-              ? item['product']['price']
-              : double.parse(item['product']['price'])),
+      for (var order in items) {
+        if (order['status'] != 1) continue;
+
+        List<Map<String, dynamic>> orderItems = [];
+        for (var item in order['order_details']) {
+          orderItems.add({
+            'id': item['product']['id'],
+            'name': item['product']['name'] ?? "Unknown Product",
+            'quantity': (item['quantity'] is int)
+                ? item['quantity']
+                : double.parse(item['quantity']).toInt(),
+            'price': double.parse(item['product']['price']),
+          });
+        }
+
+        orders.add({
+          'delivery_datetime': formatDateTime(order['delivery_datetime']),
+          'orderNo': order['id'].toString(),
+          'customerName': customerName,
+          'address': customerData?['address'] ?? 'No address provided',
+          'orderItems': orderItems,
         });
       }
 
-      orders.add({
-        'date': 'February 01, 2025',
-        'orderNo': order['id'].toString(),
-        'customerName': customerName,
-        'address': customerData?['address'] ?? 'No address provided',
-        'orderItems': orderItems,
-        'isExpanded': false,
+      setState(() {
+        _orderHistory = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading orders: $e");
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "Failed to load orders.";
       });
     }
-
-    setState(() {
-      _orderHistory = orders;
-      _isLoading = false;
-    });
-  } catch (e) {
-    debugPrint("Error loading orders: $e");
-    setState(() {
-      _isLoading = false;
-      _errorMessage = "Failed to load orders.";
-    });
-  }
-}
-
-  void toggleExpand(int index) {
-    setState(() {
-      _orderHistory[index]['isExpanded'] = !_orderHistory[index]['isExpanded'];
-    });
   }
 
   @override
@@ -118,62 +124,100 @@ Future<void> _fetchOrders() async {
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                OrderHistoryWidgets.buildOrderDetail(
-                                    "Order #", order['orderNo']),
-                                GestureDetector(
-                                  onTap: () => toggleExpand(index),
-                                  child: Icon(
-                                    order['isExpanded']
-                                        ? Icons.keyboard_arrow_up
-                                        : Icons.keyboard_arrow_down,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Divider(thickness: 1, color: Colors.grey[300]),
-                            if (order['isExpanded']) ...[
-                              const SizedBox(height: 8),
-                              OrderHistoryWidgets.buildOrderDetail(
-                                  "Customer:", order['customerName']),
-                              OrderHistoryWidgets.buildOrderDetail(
-                                  "Address:", order['address']),
-                              Divider(thickness: 1, color: Colors.grey[300]),
-                              OrderHistoryWidgets.buildOrderItems(
-                                  order['orderItems']),
-                              Divider(thickness: 1, color: Colors.grey[300]),
-                              OrderHistoryWidgets.buildTotalSection(subtotal),
-                              const SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: () {
-                                  OrderHistoryWidgets().showCheckoutDialog(context);
-                                  final CartController cartController =
-                                      Get.find<CartController>();
-                                  cartController.reorder(order[
-                                      'orderItems']); 
-                                },
-                                child: const Text('Reorder',
-                                    style: TextStyle(fontSize: 16)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 16),
+                              decoration: const BoxDecoration(
+                                color: kPrimaryColor,
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(16)),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  OrderHistoryWidgets.buildOrderDetail(
+                                      order['delivery_datetime']),
+                                  Text(
+                                    "Order ID: ${order['orderNo']}",
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.vertical(
+                                    bottom: Radius.circular(16)),
+                                 boxShadow: [
+                                  BoxShadow(
+                                    color: Color.fromARGB(255, 122, 122, 122),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  OrderHistoryWidgets.buildOrderItems(
+                                      order['orderItems']),
+                                  const Divider(
+                                      thickness: 1, color: Colors.grey),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Subtotal:',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black),
+                                      ),
+                                      Text(
+                                        '₱${subtotal.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                            fontSize: 15, color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
+                                  OrderHistoryWidgets.buildTotalSection(
+                                      subtotal),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      OrderHistoryWidgets()
+                                          .showCheckoutDialog(context);
+                                      final CartController cartController =
+                                          Get.find<CartController>();
+                                      cartController
+                                          .reorder(order['orderItems']);
+                                    },
+                                    child: const Text(
+                                      'Reorder',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       );

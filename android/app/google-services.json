@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "221082498579",
-    "project_id": "practizeeee",
-    "storage_bucket": "practizeeee.firebasestorage.app"
+    "project_number": "437359503705",
+    "firebase_url": "https://refillpro-65d6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "refillpro-65d6b",
+    "storage_bucket": "refillpro-65d6b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:221082498579:android:1dc77598d238c0eeec71e6",
+        "mobilesdk_app_id": "1:437359503705:android:066f1a1f86d8962d9b8448",
         "android_client_info": {
           "package_name": "com.example.customer_frontend"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAT5O2m7vBkbraTy0KgDY7dT8_d7OxCrqs"
+          "current_key": "AIzaSyApFq-pPOe1TCVcYcSglZus163n_xBA4b0"
         }
       ],
       "services": {
@@ -26,15 +27,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:221082498579:android:763e1df1acb72175ec71e6",
+        "mobilesdk_app_id": "1:437359503705:android:690a94ddcb115dca9b8448",
         "android_client_info": {
-          "package_name": "com.example.hello_worlds"
+          "package_name": "com.example.rider_and_clerk_application"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAT5O2m7vBkbraTy0KgDY7dT8_d7OxCrqs"
+          "current_key": "AIzaSyApFq-pPOe1TCVcYcSglZus163n_xBA4b0"
         }
       ],
       "services": {

@@ -2,28 +2,14 @@ import 'package:customer_frontend/screens/checkout/checkout.dart';
 import 'package:flutter/material.dart';
 
 class OrderHistoryWidgets {
-  static Widget buildOrderDetail(String label, String value) {
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: "$label ",
+  static Widget buildOrderDetail(String value) {
+    return Text(
+            value,
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: Colors.white,
             ),
-          ),
-          TextSpan(
-            text: value,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   static Widget buildOrderItems(List<dynamic> items) {
@@ -62,7 +48,6 @@ class OrderHistoryWidgets {
                   style: const TextStyle(
                     fontSize: 16,
                     color: Colors.black,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -76,23 +61,22 @@ class OrderHistoryWidgets {
   static Widget buildTotalSection(double subtotal) {
     return Column(
       children: [
-        const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               "Total:",
               style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black),
             ),
             Text(
               "₱${subtotal.toStringAsFixed(2)}",
               style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold),
+                  fontSize: 16,
+                  color: Colors.black
+                  ),
             ),
           ],
         ),

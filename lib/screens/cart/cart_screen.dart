@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../ordering/order.dart';
 import 'components/cart_card.dart';
 import 'components/check_out_card.dart';
 import 'package:get/get.dart';
@@ -13,16 +14,15 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final CartController cartController = Get.find();
-
-  // ✅ Fixed Price Calculation
   String calculateTotal() {
     double totalPrice = cartController.cartItems.fold(
       0,
-      (sum, item) => sum +
+      (sum, item) =>
+          sum +
           ((double.tryParse(item['price'].toString()) ?? 0.0) *
               (item['quantity'] as int)),
     );
-    return totalPrice.toStringAsFixed(2); // Format to 2 decimal points
+    return totalPrice.toStringAsFixed(2);
   }
 
   @override
@@ -93,7 +93,14 @@ class _CartScreenState extends State<CartScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: [Spacer(), Text('Add More?')],
+                          children: [
+                            Spacer(),
+                            GestureDetector(
+                                onTap: () {
+                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OrderScreen()));
+                                },
+                                child: Text('Add More?'))
+                          ],
                         ),
                         Divider(thickness: 1, color: Colors.grey[400]),
                         Row(
@@ -106,8 +113,7 @@ class _CartScreenState extends State<CartScreen> {
                             Text(
                               '₱${calculateTotal()}',
                               style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
+                                  fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -122,8 +128,7 @@ class _CartScreenState extends State<CartScreen> {
                             Text(
                               '₱0.00',
                               style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
+                                  fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -138,12 +143,10 @@ class _CartScreenState extends State<CartScreen> {
                             Text(
                               '₱${calculateTotal()}',
                               style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
+                                  fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                        
                       ],
                     );
                   },

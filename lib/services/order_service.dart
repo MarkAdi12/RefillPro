@@ -47,5 +47,35 @@ class PlaceOrderService {
     }
   }
 
+  Future<bool> cancelOrder(String accessToken, int orderId, String remarks) async {
+  final String updateOrderUrl = 'https://refillpro.store/api/v1/orders/$orderId/';
+
+  try {
+    final response = await http.post(
+      Uri.parse(updateOrderUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'status': 2,
+        'action': 'update',
+        'remarks': remarks,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Order cancelled successfully with reason: $remarks");
+      return true;
+    } else {
+      print("Failed to cancel order: ${response.body}");
+      return false;
+    }
+  } catch (e) {
+    print("Error cancelling order: $e");
+    return false;
+  }
+}
+
  
 }
