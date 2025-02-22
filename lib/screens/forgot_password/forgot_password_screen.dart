@@ -9,15 +9,15 @@ class ForgotPasswordScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
     appBar: const CustomAppBar(title: "Reset Password"),
-      body: const SizedBox(
+      body: SizedBox(
         width: double.infinity,
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                SizedBox(height: 16),
-                Text(
+                const SizedBox(height: 16),
+                const Text(
                   "Forgot Password",
                   style: TextStyle(
                     fontSize: 24,
@@ -25,11 +25,11 @@ class ForgotPasswordScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
+                const Text(
                   "Please enter your email and we will send \nyou a link to return to your account",
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
                 ForgotPassForm(),
               ],
             ),

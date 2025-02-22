@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:http/http.dart' as http;
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,6 @@ import 'package:customer_frontend/services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
-
 import '../../../services/location_service.dart';
 import '../../../services/order_list_service.dart';
 
@@ -40,10 +41,16 @@ class _EditProfileState extends State<EditProfile> {
   void initState() {
     super.initState();
     _fetchUserData();
+
+    _addressFocusNode.addListener(() {
+      if (!_addressFocusNode.hasFocus) {
+        FocusScope.of(context).unfocus(); // Force unfocus to remove suggestions
+        setState(() {}); // Trigger UI refresh
+      }
+    });
   }
 
   Future<String?> getAddressFromLatLng(double lat, double lng) async {
-    // Replace with your API key
     final String url =
         "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey";
 
@@ -123,13 +130,32 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+  void _onMarkerDragEnd(LatLng newPosition) async {
+    setState(() {
+      selectedLat = newPosition.latitude;
+      selectedLng = newPosition.longitude;
+    });
+
+    // Get new address from the dragged marker's position
+    String? address = await getAddressFromLatLng(selectedLat!, selectedLng!);
+    if (address != null) {
+      setState(() {
+        _addressController.text = address;
+      });
+    }
+    if (_mapController != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(newPosition),
+      );
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _phoneNumberController.text.isEmpty ||
         _addressController.text.isEmpty) {
-      // Show an alert if any required field is empty
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -382,7 +408,56 @@ class _EditProfileState extends State<EditProfile> {
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
-
+          if (selectedLat != null && selectedLng != null)
+            Stack(
+              children: [
+                GestureDetector(
+                  onVerticalDragUpdate: (_) {},
+                  child: SizedBox(
+                    height: 200,
+                    child: GoogleMap(
+                      onMapCreated: (GoogleMapController controller) {
+                        setState(() {
+                          _mapController = controller;
+                        });
+                      },
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                        zoom: 14.0,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId("customer_location"),
+                          position:
+                              LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                          draggable: _isEditing,
+                          onDragEnd: _onMarkerDragEnd,
+                        ),
+                      },
+                      gestureRecognizers: <Factory<
+                          OneSequenceGestureRecognizer>>{
+                        Factory<OneSequenceGestureRecognizer>(
+                          () => EagerGestureRecognizer(),
+                        ),
+                      },
+                    ),
+                  ),
+                ),
+                if (_isEditing)
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    child: FloatingActionButton(
+                      onPressed: _MapIsLoading ? null : _getCurrentLocation,
+                      backgroundColor: Colors.blue,
+                      child: _MapIsLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Icon(Icons.my_location, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 8),
           // Address Input (Only in Edit Mode)
           if (_isEditing)
             GooglePlaceAutoCompleteTextField(
@@ -390,11 +465,28 @@ class _EditProfileState extends State<EditProfile> {
               googleAPIKey: apiKey,
               inputDecoration: InputDecoration(
                 border: OutlineInputBorder(),
+                hintText: "Enter your address",
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.check),
+                  onPressed: () {
+                    setState(() {
+                      _isEditing =
+                          false; 
+                    });
+                    Future.delayed(Duration(milliseconds: 1), () {
+                      setState(() {
+                        _isEditing =
+                            true; 
+                      });
+                    });
+                  },
+                ),
               ),
               debounceTime: 400,
               countries: ["PH"],
               isLatLngRequired: true,
               focusNode: _addressFocusNode,
+              isCrossBtnShown: false,
               getPlaceDetailWithLatLng: (placeDetail) {
                 setState(() {
                   selectedLat = double.tryParse(placeDetail.lat ?? '');
@@ -409,59 +501,23 @@ class _EditProfileState extends State<EditProfile> {
                 }
               },
               itemClick: (prediction) {
-                _addressController.text = prediction.description!;
+                setState(() {
+                  _addressController.text = prediction.description!;
+                });
                 _addressController.selection = TextSelection.fromPosition(
                   TextPosition(offset: prediction.description!.length),
                 );
+                _addressFocusNode.unfocus();
+                FocusScope.of(context).unfocus();
+                Future.delayed(Duration(milliseconds: 100), () {
+                  _addressController.clearComposing(); 
+                });
               },
             )
           else
             Text(
-              _addressController.text.isNotEmpty
-                  ? _addressController.text
-                  : "N/A",
+              _addressController.text.isNotEmpty ? _addressController.text : "",
               style: const TextStyle(fontSize: 16),
-            ),
-          const SizedBox(height: 8),
-          if (selectedLat != null && selectedLng != null)
-            Stack(
-              children: [
-                SizedBox(
-                  height: 200,
-                  child: GoogleMap(
-                    onMapCreated: (GoogleMapController controller) {
-                      _mapController = controller;
-                    },
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
-                      zoom: 14.0,
-                    ),
-                    markers: {
-                      Marker(
-                        markerId: const MarkerId("customer_location"),
-                        position:
-                            LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
-                      ),
-                    },
-                    padding: const EdgeInsets.only(bottom: 40),
-                  ),
-                ),
-                // "Use Current Location" Button (Only in Edit Mode)
-                if (_isEditing)
-                  Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: FloatingActionButton(
-                      onPressed: _MapIsLoading
-                          ? null
-                          : _getCurrentLocation, // Disable button when loading
-                      backgroundColor: Colors.blue,
-                      child: _MapIsLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Icon(Icons.my_location, color: Colors.white),
-                    ),
-                  ),
-              ],
             ),
         ],
       ),

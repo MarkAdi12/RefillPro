@@ -26,14 +26,9 @@ class OrderStatus extends StatelessWidget {
         statusIcon = Icons.check_circle;
         break;
       case 2:
-        statusText = "Cancelled";
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel;
-        break;
-      case 3:
-        statusText = "In Transit"; 
-        statusColor = Colors.orange; 
-        statusIcon = Icons.directions_car; 
+        statusText = "In Transit";
+        statusColor = Colors.orange;
+        statusIcon = Icons.directions_car;
         break;
       default:
         statusText = "Unknown";
@@ -57,7 +52,7 @@ class OrderStatus extends StatelessWidget {
                   thickness: 2,
                 ),
                 afterLineStyle: LineStyle(
-                  color:  Colors.grey,
+                  color: Colors.grey,
                   thickness: 2,
                 ),
                 indicatorStyle: IndicatorStyle(
@@ -102,7 +97,7 @@ class OrderStatus extends StatelessWidget {
                 endChild: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    "In Transit", // Text for the new tile
+                    "In Transit", 
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
@@ -112,6 +107,7 @@ class OrderStatus extends StatelessWidget {
             // Completed
             Expanded(
               child: TimelineTile(
+                isLast: true,
                 axis: TimelineAxis.horizontal,
                 alignment: TimelineAlign.center,
                 beforeLineStyle: LineStyle(
@@ -141,37 +137,6 @@ class OrderStatus extends StatelessWidget {
               ),
             ),
             // Cancelled
-            Expanded(
-              child: TimelineTile(
-                axis: TimelineAxis.horizontal,
-                alignment: TimelineAlign.center,
-                isLast: true,
-                beforeLineStyle: LineStyle(
-                  color: status >= 2 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                afterLineStyle: LineStyle(
-                  color: status > 2 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                indicatorStyle: IndicatorStyle(
-                  width: 40,
-                  color: status >= 2 ? statusColor : Colors.grey,
-                  iconStyle: IconStyle(
-                    iconData: Icons.cancel,
-                    color: Colors.white,
-                  ),
-                ),
-                endChild: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    "Cancelled",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

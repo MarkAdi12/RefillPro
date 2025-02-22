@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-
   final String loginUrl = 'https://refillpro.store/api/v1/login/';
   final String userUrl = 'https://refillpro.store/api/v1/user/';
 
@@ -60,10 +59,10 @@ class AuthService {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(updatedData), // Send the updated user data in the request body
+      body: jsonEncode(updatedData), 
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body); // Return updated user data
+      return jsonDecode(response.body); 
     } else {
       print('Failed to update user data: ${response.body}');
       return null;
@@ -90,4 +89,41 @@ class AuthService {
       return false; // Indicate failure
     }
   }
+
+
+    final String requestUrl = 'https://refillpro.store/api/v1/password-reset/request/';
+    Future<Map<String, dynamic>?> requestPassword(String email) async {
+    // Request for new password
+    final response = await http.post(
+      Uri.parse(requestUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print('Request Failed: ${response.body}');
+      return null;
+    }
+  }
+
+  final String confirmpasswordUrl = 'https://refillpro.store/api/v1/password-reset/confirm/';
+    Future<Map<String, dynamic>?> confirmPassword(String token, String new_password, String confirm_password) async {
+    // Request for new password
+    final response = await http.post(
+      Uri.parse(confirmpasswordUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': token, 'new_password': new_password, 'confirm_password': confirm_password}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print('Request Failed: ${response.body}');
+      return null;
+    }
+  }
+
+
 }

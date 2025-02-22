@@ -1,111 +1,151 @@
-import 'package:customer_frontend/components/custom_appbar.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
+import 'package:customer_frontend/services/auth_service.dart';
 
-class NewPasswordScreen extends StatelessWidget {
+class NewPasswordScreen extends StatefulWidget {
   const NewPasswordScreen({super.key});
+
+  @override
+  State<NewPasswordScreen> createState() => _NewPasswordScreenState();
+}
+
+class _NewPasswordScreenState extends State<NewPasswordScreen> {
+  final TextEditingController tokenController = TextEditingController();
+  final TextEditingController newPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  bool isLoading = false;
+  String? errorMessage;
+
+  Future<void> _resetPassword() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    String token = tokenController.text;
+    String newPassword = newPasswordController.text;
+    String confirmPassword = confirmPasswordController.text;
+    // ✅ Frontend Validations
+    if (token.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      setState(() {
+        errorMessage = "All fields are required.";
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setState(() {
+        errorMessage = "Password must be at least 6 characters.";
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      setState(() {
+        errorMessage = "Passwords do not match.";
+        isLoading = false;
+      });
+      return;
+    }
+
+    final response =
+        await _authService.confirmPassword(token, newPassword, confirmPassword);
+      setState(() {
+      isLoading = false;
+      if (response != null) {
+        print("API Response: $response"); 
+        if (response.containsKey('error')) {
+          errorMessage = response['error'];
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreen()),
+          );
+        }
+      } else {
+        errorMessage = "Failed to reset password. Please try again.";
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    tokenController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Reset Password"),
-      body: const SizedBox(
-        width: double.infinity,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                SizedBox(height: 16),
-                Text(
-                  "Set New Password",
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "Please enter your new password and confirm your password to reset it successfully.",
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 32),
-                NewPasswordForm(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class NewPasswordForm extends StatefulWidget {
-  const NewPasswordForm({super.key});
-
-  @override
-  State<NewPasswordForm> createState() => _NewPasswordFormState();
-}
-
-class _NewPasswordFormState extends State<NewPasswordForm> {
-  final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: newPasswordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: "New Password",
-            hintText: "Enter your new password",
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: confirmPasswordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: "Confirm Password",
-            hintText: "Confirm your new password",
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SignInScreen(),
-                  ));
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      appBar: AppBar(title: const Text("Reset Password")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: tokenController,
+              decoration: InputDecoration(
+                labelText: "Reset Token",
+                hintText: "Enter reset token",
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
-            child: const Text(
-              "Reset Password",
-              style: TextStyle(fontSize: 16),
+            const SizedBox(height: 16),
+            TextField(
+              controller: newPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "New Password",
+                hintText: "Enter your new password",
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: confirmPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Confirm Password",
+                hintText: "Confirm your new password",
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            if (errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  errorMessage!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _resetPassword,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Reset Password",
+                        style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

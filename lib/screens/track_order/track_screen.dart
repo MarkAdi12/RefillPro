@@ -31,34 +31,31 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   void initState() {
     super.initState();
     _fetchOrders();
-    _listenToLocationUpdates(); // Fetch rider location from Firebase
+    _listenToLocationUpdates();
   }
 
-void _listenToLocationUpdates() {
-  DatabaseReference locationRef = _database.ref('location');
-
-  locationRef.onValue.listen((DatabaseEvent event) {
-    DataSnapshot snapshot = event.snapshot;
-
-    if (snapshot.exists && snapshot.value is Map) {
-      Map<dynamic, dynamic> locationData = snapshot.value as Map;
-
-      double lat = (locationData['lat'] as num).toDouble();
-      double long = (locationData['long'] as num).toDouble();
-
-      setState(() {
-        _riderLat = lat;
-        _riderLong = long;
-      });
-
-      print('Updated Location: $lat, $long');
-    } else {
-      print('No location data found in Firebase');
-    }
-  });
-}
+  void _listenToLocationUpdates() {
+    // Real Time tracking of rider location
+    DatabaseReference locationRef = _database.ref('location');
+    locationRef.onValue.listen((DatabaseEvent event) {
+      DataSnapshot snapshot = event.snapshot;
+      if (snapshot.exists && snapshot.value is Map) {
+        Map<dynamic, dynamic> locationData = snapshot.value as Map;
+        double lat = (locationData['lat'] as num).toDouble();
+        double long = (locationData['long'] as num).toDouble();
+        setState(() {
+          _riderLat = lat;
+          _riderLong = long;
+        });
+        print('Updated Location: $lat, $long');
+      } else {
+        print('No location data found in Firebase');
+      }
+    });
+  }
 
   Future<void> _fetchOrders() async {
+    // Order Retrieve
     String? token = await _secureStorage.read(key: 'access_token');
     if (token == null) {
       setState(() {
@@ -75,17 +72,14 @@ void _listenToLocationUpdates() {
       String customerName = customerData != null
           ? "${customerData['first_name']} ${customerData['last_name']}"
           : "Unknown Customer";
-
       List<Map<String, dynamic>> orders = [];
-
       for (var order in items) {
         if (order['status'] != 0) continue;
-
-        // Fetch payment data for the order
+        // fetch payment
         final paymentData =
             await _orderListService.retrievePayment(token, order['id']);
         if (paymentData != null) {
-          _paymentData[order['id']] = paymentData; // Store payment data
+          _paymentData[order['id']] = paymentData; // store payment data
         }
 
         List<Map<String, dynamic>> orderItems = [];
@@ -158,21 +152,24 @@ void _listenToLocationUpdates() {
                       itemCount: _trackingOrders.length,
                       itemBuilder: (context, index) {
                         final order = _trackingOrders[index];
+                        int orderStatus = int.tryParse(order['status'].toString()) ?? 0; 
                         return Column(
                           children: [
-                            _buildLocationContainer(
-                              order['customerLat'],
-                              order['customerLong'],
-                              _riderLat, // Rider location from Firebase
-                              _riderLong, // Rider location from Firebase
-                              order['customerName'],
-                            ),
-                            OrderStatus(
-                              status:
-                                  int.tryParse(order['status'].toString()) ?? 0,
-                            ),
+                            orderStatus == 0
+                                ? Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Image.asset("assets/prepairing.gif", width: 300, height: 300)
+                                  )
+                                : _buildLocationContainer(
+                                    order['customerLat'],
+                                    order['customerLong'],
+                                    _riderLat,
+                                    _riderLong,
+                                    order['customerName'],
+                                  ),
+                            OrderStatus(status: orderStatus),
                             OrderDetails(
-                              currentStep: order['status'] == "Pending" ? 0 : 1,
+                              currentStep: orderStatus == 0 ? 0 : 1,
                               orderNo: order['orderNo'],
                               customerName: order['customerName'],
                               status: order['status'],
@@ -187,6 +184,7 @@ void _listenToLocationUpdates() {
     );
   }
 
+  // Payment
   String _getPaymentStatus(int orderId) {
     final paymentData = _paymentData[orderId];
 
@@ -206,6 +204,7 @@ void _listenToLocationUpdates() {
     }
   }
 
+  // Map
   Widget _buildLocationContainer(
     double customerLat,
     double customerLong,
@@ -214,7 +213,7 @@ void _listenToLocationUpdates() {
     String customerName,
   ) {
     return SizedBox(
-      height: 350,
+      height: 330,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: GoogleMap(

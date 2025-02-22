@@ -113,11 +113,7 @@ class _OtpFormState extends State<OtpForm> {
                         builder: (context) => const SignInScreen()),
                   );
                 } else if (widget.flowType == "resetPassword") {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const NewPasswordScreen()),
-                  );
+                  
                 }
               },
               child: const Text("Continue"),

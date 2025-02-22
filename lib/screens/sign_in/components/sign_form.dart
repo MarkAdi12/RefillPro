@@ -1,7 +1,7 @@
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:customer_frontend/services/auth_service.dart'; 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; 
+import 'package:customer_frontend/services/auth_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../constants.dart';
 import '../../forgot_password/forgot_password_screen.dart';
 
@@ -16,8 +16,9 @@ class _SignFormState extends State<SignForm> {
   final AuthService _authService = AuthService();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FlutterSecureStorage _secureStorage = FlutterSecureStorage(); 
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
+  bool _obscureText = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -51,12 +52,9 @@ class _SignFormState extends State<SignForm> {
       _phoneController.text,
       _passwordController.text,
     );
-
     if (tokens != null) {
       String accessToken = tokens['access'];
-
       print("✅ Access Token: $accessToken");
-
       await _secureStorage.write(key: 'access_token', value: accessToken);
       print("🔒 Token stored securely");
 
@@ -91,22 +89,29 @@ class _SignFormState extends State<SignForm> {
             controller: _phoneController..text = "mark1",
             keyboardType: TextInputType.text,
             decoration: const InputDecoration(
-              labelText: "Phone",
+              labelText: "Username",
               labelStyle: TextStyle(color: kPrimaryColor),
-              hintText: "Enter your number",
+              hintText: "Enter your Username",
               floatingLabelBehavior: FloatingLabelBehavior.always,
-              suffixIcon: Icon(Icons.phone_iphone_rounded, size: 22),
             ),
           ),
           const SizedBox(height: 20),
           TextFormField(
+            obscureText: _obscureText,
             controller: _passwordController..text = "Teentitans1",
-            decoration: const InputDecoration(
+            decoration:  InputDecoration(
               labelText: "Password",
               labelStyle: TextStyle(color: kPrimaryColor),
               hintText: "Enter your password",
               floatingLabelBehavior: FloatingLabelBehavior.always,
-              suffixIcon: Icon(Icons.lock, size: 22),
+              suffixIcon: IconButton(
+                icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText; 
+                  });
+                },
+              ),
             ),
           ),
           const SizedBox(height: 20),

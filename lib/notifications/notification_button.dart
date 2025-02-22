@@ -6,9 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 Future<void> sendNotification() async {
   // FCM TOKEN
   String? fcmToken = await FirebaseMessaging.instance.getToken();
-
   // const String fcmToken = 'f9keAaESRXasmZGjUc0-UX:APA91bEhzcfDAlb3jkwJbRbYtvITUMNsl-HmRqGSo27lRMI2ZBH9nkHFxtsbIrQZtmkhkfQg_XE45zxGMlV3FRUNLsR5UHm1QaAG-ZoXpRuWNh5n59IEIN0';
-
   // Real Device const url = 'http://192.168.1.3:3000/send-notification';
   // Emulator
      const url = 'http://10.0.2.2:3000/send-notification';
