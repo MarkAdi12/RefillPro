@@ -1,5 +1,5 @@
 import 'package:customer_frontend/screens/forgot_password/new_password_screen.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../../constants.dart';

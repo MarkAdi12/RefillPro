@@ -25,7 +25,7 @@ class _EditProfileState extends State<EditProfile> {
 
   Map<String, dynamic>? userData;
   bool _MapIsLoading = false;
-  bool _isEditing = false; // Track if the user is editing
+  bool _isEditing = true;
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -106,6 +106,7 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
+
     final userInfo = await _authService.getUser(accessToken);
     if (userInfo != null) {
       setState(() {
@@ -181,6 +182,13 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
+    String? fcmToken = await _secureStorage.read(key: 'fcm_token');
+    if (fcmToken == null) {
+    print("No FCM token found");
+    } else {
+    print("FCM token found: $fcmToken");
+    }
+
     final updatedData = {
       "first_name": _firstNameController.text,
       "last_name": _lastNameController.text,
@@ -189,6 +197,7 @@ class _EditProfileState extends State<EditProfile> {
       "address": _addressController.text,
       "lat": selectedLat ?? userData?['lat'] ?? 0.0,
       "long": selectedLng ?? userData?['long'] ?? 0.0,
+      "firebase_tokens": fcmToken,
     };
 
     final response = await _authService.editUser(accessToken, updatedData);
@@ -231,18 +240,7 @@ class _EditProfileState extends State<EditProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile Details'),
-        actions: [
-          if (_isEditing)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _isEditing = false;
-                });
-              },
-            ),
-        ],
+        title: const Text('Edit Profile'),
       ),
       body: Container(
         color: const Color(0xFFF5F5F5),
@@ -295,7 +293,7 @@ class _EditProfileState extends State<EditProfile> {
                     _isEditing = true;
                   });
                 },
-          child: Text(_isEditing ? "Save Profile" : "Edit Profile"),
+          child: Text(_isEditing ? "Save Profile" : "Save Profile"),
         ),
       ),
     );
@@ -458,7 +456,6 @@ class _EditProfileState extends State<EditProfile> {
               ],
             ),
           const SizedBox(height: 8),
-          // Address Input (Only in Edit Mode)
           if (_isEditing)
             GooglePlaceAutoCompleteTextField(
               textEditingController: _addressController,
@@ -470,13 +467,11 @@ class _EditProfileState extends State<EditProfile> {
                   icon: Icon(Icons.check),
                   onPressed: () {
                     setState(() {
-                      _isEditing =
-                          false; 
+                      _isEditing = false;
                     });
                     Future.delayed(Duration(milliseconds: 1), () {
                       setState(() {
-                        _isEditing =
-                            true; 
+                        _isEditing = true;
                       });
                     });
                   },
@@ -510,7 +505,7 @@ class _EditProfileState extends State<EditProfile> {
                 _addressFocusNode.unfocus();
                 FocusScope.of(context).unfocus();
                 Future.delayed(Duration(milliseconds: 100), () {
-                  _addressController.clearComposing(); 
+                  _addressController.clearComposing();
                 });
               },
             )

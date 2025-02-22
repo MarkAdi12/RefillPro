@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:customer_frontend/services/auth_service.dart';
 
 class NewPasswordScreen extends StatefulWidget {

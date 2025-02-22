@@ -52,21 +52,45 @@ class _SignFormState extends State<SignForm> {
       _phoneController.text,
       _passwordController.text,
     );
+
     if (tokens != null) {
       String accessToken = tokens['access'];
-      print("✅ Access Token: $accessToken");
+      print("Access Token: $accessToken");
       await _secureStorage.write(key: 'access_token', value: accessToken);
-      print("🔒 Token stored securely");
-
       final userData = await _authService.getUser(accessToken);
       if (userData != null) {
+        // Get the FCM token
+        String? fcmToken = await _secureStorage.read(key: 'fcm_token');
+        if (fcmToken == null || fcmToken.isEmpty) {
+          print("fcm empty");
+          return; 
+        } else {
+          print("FCM token found: $fcmToken");
+        }
+
+        final updatedData = {
+          "firebase_tokens": fcmToken,
+        };
+        print("🚀 Sending updated data: $updatedData");
+
+        try {
+          final response =
+              await _authService.editUser(accessToken, updatedData);
+          if (response != null) {
+            print('FCM token saved');
+          } else {
+            print('FCM token failed to saved');
+          }
+        } catch (e) {
+          print('Error updating FCM token: $e');
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => InitScreen()),
         );
       } else {
         setState(() {
-          _errorMessage = "Failed to fetch user data.";
         });
       }
     } else {
@@ -98,17 +122,18 @@ class _SignFormState extends State<SignForm> {
           const SizedBox(height: 20),
           TextFormField(
             obscureText: _obscureText,
-            controller: _passwordController..text = "Teentitans1",
-            decoration:  InputDecoration(
+            controller: _passwordController..text = "Teentitans2",
+            decoration: InputDecoration(
               labelText: "Password",
               labelStyle: TextStyle(color: kPrimaryColor),
               hintText: "Enter your password",
               floatingLabelBehavior: FloatingLabelBehavior.always,
               suffixIcon: IconButton(
-                icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility),
                 onPressed: () {
                   setState(() {
-                    _obscureText = !_obscureText; 
+                    _obscureText = !_obscureText;
                   });
                 },
               ),

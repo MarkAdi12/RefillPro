@@ -18,11 +18,8 @@ class NotificationService {
 
   Future<void> initialize() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    // Request permission
     await _requestPermission();
-    // Setup message handlers
     await _setupMessageHandlers();
-    // Get FCM token
     await _getAndStoreToken();
   }
 
@@ -30,7 +27,6 @@ class NotificationService {
     final token = await _messaging.getToken();
     print('FCM Token: $token');
     if (token != null) {
-      // Save the token securely using FlutterSecureStorage or a similar package
       await _saveToken(token);
     }
 
@@ -42,7 +38,6 @@ class NotificationService {
   }
 
   Future<void> _saveToken(String token) async {
-    // You can use FlutterSecureStorage or any other secure storage method
     final secureStorage = FlutterSecureStorage();
     await secureStorage.write(key: 'fcm_token', value: token);
   }
@@ -140,7 +135,6 @@ class NotificationService {
 
   void _handleBackgroundMessage(RemoteMessage message) {
     if (message.data['type'] == 'chat') {
-      // open chat screen
     }
   }
 }

@@ -23,16 +23,16 @@ class CartCard extends StatelessWidget {
                   itemCount: groupedItems.length,
                   itemBuilder: (context, index) {
                     final item = groupedItems[index];
-                    double price = double.tryParse(item['price'].toString()) ?? 0.0;
+                    double price =
+                        double.tryParse(item['price'].toString()) ?? 0.0;
                     int quantity = item['quantity'] as int;
                     double totalPrice = price * quantity;
-
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 8.0, horizontal: 16.0),
                       child: Card(
                         color: Colors.white,
-                        elevation: 5,
+                        elevation: 6,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -42,56 +42,55 @@ class CartCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
+                                children: [                               
                                   Text(
-                                    item['name'], 
+                                    item['name'],
                                     style: TextStyle(
                                       fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                       color: kPrimaryColor,
                                     ),
                                   ),
+                                  Spacer(),
+                                  GestureDetector(
+                                      onTap: () {
+                                        cartController.removeFromCart(index);
+                                      },
+                                      child: Icon(Icons.close, size: 16,)),
+                                ],
+                              ),
+                              Row(
+                                children: [
                                   Text(
                                     '₱${totalPrice.toStringAsFixed(2)}',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w400,
                                     ),
                                   ),
+                                  Spacer(),
+                                  IconButton(
+                                    onPressed: () {
+                                      cartController.decreaseQuantity(index);
+                                    },
+                                    icon:
+                                        Icon(Icons.remove, color: Colors.grey,),
+                                  ),
+                                  Text(
+                                    '$quantity',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      cartController.increaseQuantity(index);
+                                    },
+                                    icon: Icon(Icons.add, color: kPrimaryColor),
+                                  ),
                                 ],
-                              ),
-                              SizedBox(height: 1),
-                              Container(
-                                margin: EdgeInsets.only(left: 6),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        cartController.decreaseQuantity(index);
-                                      },
-                                      icon: Icon(Icons.remove_circle_outline),
-                                    ),
-                                    Text(
-                                      '$quantity',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: kPrimaryColor,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        cartController.increaseQuantity(index);
-                                      },
-                                      icon: Icon(Icons.add_circle_outline),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ],
                           ),
@@ -108,12 +107,12 @@ class CartCard extends StatelessWidget {
     );
   }
 
-
-  List<Map<String, dynamic>> _groupItemsByName(List<Map<String, dynamic>> items) {
+  List<Map<String, dynamic>> _groupItemsByName(
+      List<Map<String, dynamic>> items) {
     Map<String, Map<String, dynamic>> grouped = {};
 
     for (var item in items) {
-      String name = item['name']; 
+      String name = item['name'];
 
       if (grouped.containsKey(name)) {
         grouped[name]!['quantity'] += item['quantity'] as int;

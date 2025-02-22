@@ -81,7 +81,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         if (paymentData != null) {
           _paymentData[order['id']] = paymentData; // store payment data
         }
-
         List<Map<String, dynamic>> orderItems = [];
         for (var item in order['order_details']) {
           orderItems.add({

@@ -1,8 +1,8 @@
 // ignore_for_file: unused_import
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:customer_frontend/screens/otp/otp_screen.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
-import 'package:customer_frontend/notifications/notification_service.dart';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
+import 'package:customer_frontend/services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'theme.dart'; 

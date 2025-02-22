@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import '../../../services/location_service.dart';
@@ -21,6 +22,7 @@ class _SignUpFormState extends State<SignUpForm> {
   final RegistrationService _registrationService = RegistrationService();
   final FocusNode _addressFocusNode = FocusNode();
   GoogleMapController? _mapController;
+  final _secureStorage = const FlutterSecureStorage();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -228,7 +230,7 @@ class _SignUpFormState extends State<SignUpForm> {
               },
             )
           else
-          Text(''),
+            Text(''),
           Stack(
             children: [
               GestureDetector(
@@ -247,12 +249,11 @@ class _SignUpFormState extends State<SignUpForm> {
                     ),
                     markers: {
                       Marker(
-                        markerId: const MarkerId("customer_location"),
-                        position:
-                            LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
-                        onDragEnd: _onMarkerDragEnd,
-                        draggable: true
-                      ),
+                          markerId: const MarkerId("customer_location"),
+                          position:
+                              LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                          onDragEnd: _onMarkerDragEnd,
+                          draggable: true),
                     },
                     gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                       Factory<OneSequenceGestureRecognizer>(
@@ -278,6 +279,12 @@ class _SignUpFormState extends State<SignUpForm> {
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: ElevatedButton(
               onPressed: () async {
+                String? fcmToken = await _secureStorage.read(key: 'fcm_token');
+                if (fcmToken == null) {
+                  print("No FCM token found");
+                } else {
+                  print("FCM token found: $fcmToken");
+                }
                 if (_formKey.currentState?.validate() ?? false) {
                   final response = await _registrationService.registerUser(
                     username: _usernameController.text,

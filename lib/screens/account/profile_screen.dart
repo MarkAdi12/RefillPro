@@ -1,10 +1,11 @@
 import 'package:customer_frontend/screens/account/components/edit_password.dart';
 import 'package:customer_frontend/screens/account/components/edit_profile.dart';
-import 'package:customer_frontend/screens/sign_in/sign_in_screen.dart';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/auth_service.dart';
 import 'components/profile_menu.dart';
+import 'components/view_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -83,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               press: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditProfile()),
+                  MaterialPageRoute(builder: (context) => const ViewProfile()),
                 );
               },
             ),

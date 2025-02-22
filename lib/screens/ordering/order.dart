@@ -180,8 +180,7 @@ class _OrderScreenState extends State<OrderScreen> {
                                                 });
                                               }
                                             },
-                                            icon: const Icon(
-                                                Icons.remove_circle_outline),
+                                            icon: const Icon(Icons.remove, color: Colors.grey,),
                                             color: kPrimaryColor,
                                           ),
                                           Text(
@@ -195,9 +194,7 @@ class _OrderScreenState extends State<OrderScreen> {
                                                 quantity++;
                                               });
                                             },
-                                            icon: const Icon(
-                                                Icons.add_circle_outline),
-                                            color: kPrimaryColor,
+                                            icon: const Icon(Icons.add, color: kPrimaryColor),
                                           ),
                                           Spacer(),
                                         ElevatedButton(

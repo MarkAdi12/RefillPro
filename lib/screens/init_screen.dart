@@ -46,31 +46,35 @@ class _InitScreenState extends State<InitScreen> {
       bottomNavigationBar: BottomNavigationBar(
         onTap: updateCurrentIndex,
         currentIndex: currentSelectedIndex,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        selectedLabelStyle: TextStyle(fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontSize: 12), 
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: kPrimaryColor, 
         unselectedItemColor: inActiveIconColor, 
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.store_outlined, size: 28),
-            activeIcon: Icon(Icons.store_rounded, size: 28),
+            icon: Icon(Icons.store_outlined, size: 22),
+            activeIcon: Icon(Icons.store_rounded, size: 26),
             label: "Home",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.delivery_dining_outlined, size: 28),
-            activeIcon: Icon(Icons.delivery_dining, size: 28),
+            icon: Icon(Icons.delivery_dining_outlined, size: 22),
+            activeIcon: Icon(Icons.delivery_dining, size: 26),
             label: "Track",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined, size: 28),
-            activeIcon: Icon(Icons.history_rounded, size: 28),
+            
+            icon: Icon(Icons.history_outlined, size: 22),
+            activeIcon: Icon(Icons.history_rounded, size: 26),
             label: "History",
+            
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_2_outlined, size: 28),
-            activeIcon: Icon(Icons.person_2_rounded, size: 28),
+            icon: Icon(Icons.person_pin, size: 22),
+            activeIcon: Icon(Icons.person_pin, size: 26),
             label: "Profile",
           ),
         ],
