@@ -9,9 +9,9 @@ class PaymentService {
     required String amount,
     required File proofFile,
     required String token,
-    required String paymentMethod, // Added
-    required String refCode, // Added
-    required String remarks, // Added
+    required String paymentMethod, 
+    required String refCode, 
+    required String remarks, 
   }) async {
     try {
       var request = http.MultipartRequest("POST", Uri.parse(apiUrl))

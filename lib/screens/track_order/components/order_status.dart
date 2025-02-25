@@ -10,134 +10,53 @@ class OrderStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String statusText;
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (status) {
-      case 0:
-        statusText = "Pending";
-        statusColor = kPrimaryColor;
-        statusIcon = Icons.hourglass_top;
-        break;
-      case 1:
-        statusText = "Completed";
-        statusColor = kPrimaryColor;
-        statusIcon = Icons.check_circle;
-        break;
-      case 2:
-        statusText = "In Transit";
-        statusColor = Colors.orange;
-        statusIcon = Icons.directions_car;
-        break;
-      default:
-        statusText = "Unknown";
-        statusColor = Colors.grey;
-        statusIcon = Icons.help;
-    }
-
+    print('Order status: $status');
     return Center(
       child: SizedBox(
-        height: 100,
+        height: 70,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: TimelineTile(
-                axis: TimelineAxis.horizontal,
-                alignment: TimelineAlign.center,
-                isFirst: true,
-                beforeLineStyle: LineStyle(
-                  color: status >= 0 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                afterLineStyle: LineStyle(
-                  color: Colors.grey,
-                  thickness: 2,
-                ),
-                indicatorStyle: IndicatorStyle(
-                  width: 40,
-                  color: status >= 0 ? statusColor : Colors.grey,
-                  iconStyle: IconStyle(
-                    iconData: Icons.hourglass_top,
-                    color: Colors.white,
-                  ),
-                ),
-                endChild: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    "Pending",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-            // In Transit (New tile)
-            Expanded(
-              child: TimelineTile(
-                axis: TimelineAxis.horizontal,
-                alignment: TimelineAlign.center,
-                beforeLineStyle: LineStyle(
-                  color: status >= 3 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                afterLineStyle: LineStyle(
-                  color: status > 3 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                indicatorStyle: IndicatorStyle(
-                  width: 40,
-                  color: status >= 3 ? statusColor : Colors.grey,
-                  iconStyle: IconStyle(
-                    iconData: Icons.directions_car, // Icon for "In Transit"
-                    color: Colors.white,
-                  ),
-                ),
-                endChild: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    "In Transit", 
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-            // Completed
-            Expanded(
-              child: TimelineTile(
-                isLast: true,
-                axis: TimelineAxis.horizontal,
-                alignment: TimelineAlign.center,
-                beforeLineStyle: LineStyle(
-                  color: status >= 1 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                afterLineStyle: LineStyle(
-                  color: status > 1 ? statusColor : Colors.grey,
-                  thickness: 2,
-                ),
-                indicatorStyle: IndicatorStyle(
-                  width: 40,
-                  color: status >= 1 ? statusColor : Colors.grey,
-                  iconStyle: IconStyle(
-                    iconData: Icons.check_circle,
-                    color: Colors.white,
-                  ),
-                ),
-                endChild: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    "Completed",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-            // Cancelled
+            _buildTimelineTile("Pending", Icons.hourglass_top, 0),
+            _buildTimelineTile("Preparing", Icons.kitchen, 1),
+            _buildTimelineTile("In Transit", Icons.directions_car, 3),
+            _buildTimelineTile("Completed", Icons.check_circle, 4, isLast: true),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineTile(String label, IconData icon, int step, {bool isLast = false}) {
+    return Expanded(
+      child: TimelineTile(
+        axis: TimelineAxis.horizontal,
+        alignment: TimelineAlign.center,
+        isFirst: step == 0,
+        isLast: isLast,
+        beforeLineStyle: LineStyle(
+          color: status >= step ? kPrimaryColor : Colors.grey,
+          thickness: 2,
+        ),
+        afterLineStyle: LineStyle(
+          color: status > step ? kPrimaryColor : Colors.grey,
+          thickness: 2,
+        ),
+        indicatorStyle: IndicatorStyle(
+          width: 40,
+          color: status >= step ? kPrimaryColor : Colors.grey,
+          iconStyle: IconStyle(
+            iconData: icon,
+            color: Colors.white,
+          ),
+        ),
+        endChild: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );

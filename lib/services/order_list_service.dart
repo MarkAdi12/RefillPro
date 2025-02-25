@@ -4,6 +4,31 @@ import 'package:http/http.dart' as http;
 class OrderListService {
   static const String ordersUrl = 'https://refillpro.store/api/v1/orders/';
 
+  Future<Map<String, dynamic>?> fetchOrderById(
+      String accessToken, int orderId) async {
+    final String orderIDUrl = 'https://refillpro.store/api/v1/orders/$orderId';
+
+    try {
+      final response = await http.get(
+        Uri.parse(orderIDUrl),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Failed to load order. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error fetching order: $e");
+      return null;
+    }
+  }
+
   Future<List<dynamic>> fetchOrders(String accessToken) async {
     try {
       final response = await http.get(
@@ -26,49 +51,57 @@ class OrderListService {
     }
   }
 
- Future retrievePayment(String accessToken, int orderId) async {
-  final String paymentUrl =
-      'https://refillpro.store/api/v1/rider/payments/$orderId/';
+  Future<dynamic> retrievePayment(String accessToken, int orderId) async {
+    final String paymentUrl =
+        'https://refillpro.store/api/v1/rider/payments/$orderId/';
 
-  print('Request URL: $paymentUrl');
-  try {
-    final response = await http.get(
-      Uri.parse(paymentUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-    );
+    print('Request URL: $paymentUrl');
+    try {
+      final response = await http.get(
+        Uri.parse(paymentUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List && data.isNotEmpty) {
-        print("Received list of payments: $data");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-        // Sort payments by `created_at` or `updated_at` in descending order
-        data.sort((a, b) {
-          final DateTime dateA = DateTime.parse(a['created_at'] ?? a['updated_at']);
-          final DateTime dateB = DateTime.parse(b['created_at'] ?? b['updated_at']);
-          return dateB.compareTo(dateA); // Sort in descending order
-        });
+        if (data is List) {
+          if (data.isEmpty) {
+            print("No payments found for orderId: $orderId");
+            return null; // Return null if the list is empty
+          } else {
+            print("Received list of payments: $data");
 
-        // Return the latest payment
-        return data[0];
-      } else if (data is Map) {
-        // If it's a single payment, return it as is
-        print("Received single payment: $data");
-        return data;
+            // Sort payments by `created_at` or `updated_at` in descending order
+            data.sort((a, b) {
+              final DateTime dateA =
+                  DateTime.parse(a['created_at'] ?? a['updated_at']);
+              final DateTime dateB =
+                  DateTime.parse(b['created_at'] ?? b['updated_at']);
+              return dateB.compareTo(dateA); // Sort in descending order
+            });
+
+            // Return the latest payment
+            return data[0];
+          }
+        } else if (data is Map) {
+          // If it's a single payment, return it as is
+          print("Received single payment: $data");
+          return data;
+        } else {
+          print("Unexpected response format: $data");
+          return null;
+        }
       } else {
-        print("Unexpected response format: $data");
+        print("Failed to retrieve payment: ${response.body}");
         return null;
       }
-    } else {
-      print("Failed to retrieve payment: ${response.body}");
+    } catch (e) {
+      print("Error retrieving payment: $e");
       return null;
     }
-  } catch (e) {
-    print("Error retrieving payment: $e");
-    return null;
   }
-}
 }

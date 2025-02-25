@@ -1,219 +1,420 @@
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/screens/cart/cart_screen.dart';
 import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  String? _address;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserAddress();
+  }
+
+  Future<void> _loadUserAddress() async {
+    String? userData = await _secureStorage.read(key: 'user_data');
+    if (userData != null) {
+      final userMap = jsonDecode(userData);
+      setState(() {
+        _address = userMap['address'] ?? 'No address available';
+      });
+    } else {
+      setState(() {
+        _address = 'No address available';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Text(
-          'AquaZen',
-          style: TextStyle(color: Colors.white, fontSize: 22),
-        ),
-        actions: [  
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CartScreen()),
-              );
-            },
-            icon: const Icon(
-              Icons.shopping_cart_rounded,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 20),
+        backgroundColor: kPrimaryColor,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: const [
+                Icon(
+                  Icons.water_drop_sharp,
+                  size: 23,
+                ),
+                SizedBox(width: 10),
                 Text(
-                  'Order Fresh Water Now',
-                  style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimaryColor),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Delivered Straight to Your Doorstep!',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => OrderScreen()),
-                    );
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(kPrimaryColor),
-                    padding: WidgetStateProperty.all(
-                        EdgeInsets.symmetric(vertical: 16, horizontal: 32)),
-                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                  ),
-                  child: Text(
-                    'Order Now',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text('Next Suggested Order: 3 days'), // FORECASTING
-                SizedBox(height: 5),
-
-                // ITEMS
-                Text('Choose Your Product',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                SizedBox(height: 20),
-                ProductCard(
-                  title: '5 Round Gallon',
-                  description: 'Fresh and pure water in a convenient size.',
-                  price: '30.00 Only',
-                  onTap: () {
-                    // Navigate to order page with this product
-                  },
-                ),
-                SizedBox(height: 20),
-                ProductCard(
-                  title: '5 Round Gallon',
-                  description: 'Great for large families or offices.',
-                  price: '30.00 Only',
-                  onTap: () {},
-                ),
-                SizedBox(height: 40),
-                // Operational Hours
-                Text(
-                  'Operational Hours: 9:00 AM - 5:00 PM',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                ),
-                SizedBox(height: 20),
-                Text('What Our Customers Say',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                SizedBox(height: 10),
-                SizedBox(
-                  height: 120,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      ReviewCard(
-                        review: 'Solid Mabilis mag deliver!',
-                        customerName: 'Lebronskie',
-                      ),
-                      SizedBox(width: 10),
-                      ReviewCard(
-                        review: 'Angas par promise! ',
-                        customerName: 'Phal Kups',
-                      ),
-                      ReviewCard(review: 'Sarap', customerName: 'LBJ'),
-                      ReviewCard(
-                        review: 'Solid Mabilis mag deliver!',
-                        customerName: 'Lebronskie',
-                      ),
-                      ReviewCard(
-                        review: 'Solid Mabilis mag deliver!',
-                        customerName: 'Lebronskie',
-                      ),
-                    ],
-                  ),
+                  'AquaZen',
+                  style: TextStyle(color: Colors.white),
+                  textAlign: TextAlign.left,
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class ProductCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final String price;
-  final VoidCallback onTap;
-
-  const ProductCard(
-      {super.key,
-      required this.title,
-      required this.description,
-      required this.price,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: SizedBox(
-        width: 300,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Text(title,
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                SizedBox(height: 8),
-                Text(description,
-                    style: TextStyle(fontSize: 14, color: Colors.grey)),
-                SizedBox(height: 8),
-                Text(price,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor)),
-              ],
+          actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CartScreen()),
+                );
+              },
+              icon: const Icon(
+                Icons.shopping_cart_rounded,
+                size: 23,
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ReviewCard extends StatelessWidget {
-  final String review;
-  final String customerName;
-
-  const ReviewCard(
-      {super.key, required this.review, required this.customerName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('"$review"', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('- $customerName',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           ],
         ),
-      ),
-    );
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                color: kPrimaryColor,
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.location_on_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Delivering To',
+                            style:
+                                TextStyle(fontSize: 13, color: Colors.white)),
+                        Text(
+                          _address != null && _address!.length > 30
+                              ? '${_address!.substring(0, 30)}...'
+                              : _address ?? 'No address available',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 615,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(22),
+                    topRight: Radius.circular(22),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Most Selected Item',
+                            style: TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.w400),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => OrderScreen()),
+                              );
+                            },
+                            child: const Text(
+                              'View All',
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  color: Color.fromARGB(255, 82, 107, 131)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 105,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.asset(
+                                    'assets/slim.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                  child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Slim Water Gallon',
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w200),
+                                  ),
+                                  Row(children: [
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      size: 18,
+                                      color: kPrimaryColor,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: Colors.grey,
+                                      size: 18,
+                                    ),
+                                  ]),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '5 Gallon',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'PHP 35.00',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: kPrimaryColor,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      OrderScreen()),
+                                            );
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4, horizontal: 16),
+                                            child: Text('Order Now',
+                                                style: TextStyle(
+                                                    color: kPrimaryColor)),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ))
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 105,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.asset(
+                                    'assets/round.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                  child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Round Water Gallon',
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w200),
+                                  ),
+                                  Row(children: [
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: kPrimaryColor,
+                                      size: 18,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      size: 18,
+                                      color: kPrimaryColor,
+                                    ),
+                                    Icon(
+                                      Icons.water_drop_rounded,
+                                      color: Colors.grey,
+                                      size: 18,
+                                    ),
+                                  ]),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '5 Gallon',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'PHP 35.00',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: kPrimaryColor,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      OrderScreen()),
+                                            );
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4, horizontal: 16),
+                                            child: Text('Order Now',
+                                                style: TextStyle(
+                                                    color: kPrimaryColor)),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ))
+                            ],
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+        ));
   }
 }

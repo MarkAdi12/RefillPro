@@ -49,7 +49,6 @@ class PlaceOrderService {
 
   Future<bool> cancelOrder(String accessToken, int orderId, String remarks) async {
   final String updateOrderUrl = 'https://refillpro.store/api/v1/orders/$orderId/';
-
   try {
     final response = await http.post(
       Uri.parse(updateOrderUrl),
@@ -58,7 +57,7 @@ class PlaceOrderService {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode({
-        'status': 2,
+        'status': 5,
         'action': 'update',
         'remarks': remarks,
       }),
@@ -75,7 +74,5 @@ class PlaceOrderService {
     print("Error cancelling order: $e");
     return false;
   }
-}
-
- 
+} 
 }

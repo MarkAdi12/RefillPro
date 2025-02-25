@@ -106,7 +106,6 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
-
     final userInfo = await _authService.getUser(accessToken);
     if (userInfo != null) {
       setState(() {
@@ -184,9 +183,9 @@ class _EditProfileState extends State<EditProfile> {
 
     String? fcmToken = await _secureStorage.read(key: 'fcm_token');
     if (fcmToken == null) {
-    print("No FCM token found");
+      print("No FCM token found");
     } else {
-    print("FCM token found: $fcmToken");
+      print("FCM token found: $fcmToken");
     }
 
     final updatedData = {
@@ -205,6 +204,11 @@ class _EditProfileState extends State<EditProfile> {
       setState(() {
         _isEditing = false;
       });
+      await _secureStorage.write(
+          key: 'user_data', value: jsonEncode(updatedData));
+
+      print('Profile updated successfully');
+      print('Updated user data: $updatedData');
       print('Profile updated successfully');
       Navigator.pop(context, true);
     } else {

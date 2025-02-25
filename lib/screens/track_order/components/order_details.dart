@@ -4,13 +4,14 @@ import 'package:customer_frontend/services/order_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../checkout/components/payment_form.dart';
 
-class OrderDetails extends StatelessWidget {
+class OrderDetails extends StatefulWidget {
   final int currentStep;
   final String orderNo;
   final String customerName;
   final String status;
   final List<Map<String, dynamic>> orderItems;
   final String paymentStatus;
+  final String amount;
 
   const OrderDetails({
     super.key,
@@ -20,7 +21,29 @@ class OrderDetails extends StatelessWidget {
     required this.status,
     required this.orderItems,
     required this.paymentStatus,
+    required this.amount,
   });
+
+  @override
+  _OrderDetailsState createState() => _OrderDetailsState();
+}
+
+class _OrderDetailsState extends State<OrderDetails> {
+  bool _isOrderCancelled = false;
+  String getStatusText(int status) {
+    switch (status) {
+      case 0:
+        return "Pending";
+      case 1:
+        return "Preparing";
+      case 3:
+        return "In Transit";
+      case 4:
+        return "Completed";
+      default:
+        return "Unknown";
+    }
+  }
 
   Future<void> _cancelOrder(BuildContext context, String accessToken,
       int orderId, String remarks) async {
@@ -29,13 +52,43 @@ class OrderDetails extends StatelessWidget {
         await orderService.cancelOrder(accessToken, orderId, remarks);
 
     if (isCancelled) {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => InitScreen()));
+      setState(() {
+        _isOrderCancelled = true;
+      });
+      _showOrderCancelledDialog(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to cancel order")),
       );
     }
+  }
+
+  void _showOrderCancelledDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Order Cancelled", style: TextStyle(fontSize: 12)),
+          content: const Text("Your order has been cancelled. Thank you!"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await const FlutterSecureStorage()
+                    .delete(key: 'tracking_order_id');
+                Navigator.of(context).pop();
+                setState(() {
+                  _isOrderCancelled = true;
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => InitScreen()));
+                });
+              },
+              child: const Text("Done"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showCancelReasonDialog(BuildContext context) async {
@@ -50,28 +103,26 @@ class OrderDetails extends StatelessWidget {
 
     String? confirmedReason = await showDialog<String>(
       context: context,
-      barrierDismissible: false, 
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-            "Cancel Order",
-            style: TextStyle(fontSize: 18),
-          ),
+          title: const Text("Cancel Order"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Please select a reason for cancellation:", style: TextStyle(fontSize: 16)),
+              const Text("Please select a reason for cancellation:"),
               DropdownButton<String>(
                 value: selectedReason,
                 isExpanded: true,
                 onChanged: (String? newValue) {
-                  selectedReason = newValue!;
-                  (context as Element).markNeedsBuild();
+                  setState(() {
+                    selectedReason = newValue!;
+                  });
                 },
                 items: reasons.map((String reason) {
                   return DropdownMenuItem<String>(
                     value: reason,
-                    child: Text(reason, style: TextStyle(fontSize: 18),),
+                    child: Text(reason),
                   );
                 }).toList(),
               ),
@@ -111,7 +162,7 @@ class OrderDetails extends StatelessWidget {
           await const FlutterSecureStorage().read(key: 'access_token');
       if (accessToken != null) {
         await _cancelOrder(
-            context, accessToken, int.parse(orderNo), confirmedReason);
+            context, accessToken, int.parse(widget.orderNo), confirmedReason);
       }
     }
   }
@@ -138,9 +189,10 @@ class OrderDetails extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn("Order #", orderNo),
-              _buildInfoColumn("Customer", customerName),
-              _buildInfoColumn("Status", status),
+              _buildInfoColumn("Order #", widget.orderNo),
+              _buildInfoColumn("Customer", widget.customerName),
+              _buildInfoColumn(
+                  "Status", getStatusText(int.tryParse(widget.status) ?? 0)),
             ],
           ),
           const SizedBox(height: 8),
@@ -155,28 +207,30 @@ class OrderDetails extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...orderItems.map((item) => _buildOrderItem(item)).toList(),
+          ...widget.orderItems.map((item) => _buildOrderItem(item)).toList(),
           Row(
             children: [
               const Text('Payment:'),
               const Spacer(),
               InkWell(
                 onTap: () {
-                  if (paymentStatus == "Payment Failed") {
+                  if (widget.paymentStatus == "Payment Failed") {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              PaymentForm(orderID: int.parse(orderNo))),
+                          builder: (context) => PaymentForm(
+                                orderID: int.parse(widget.orderNo),
+                                amount: widget.amount,
+                              )),
                     );
                   }
                 },
                 child: Text(
-                  paymentStatus == "Payment Failed"
+                  widget.paymentStatus == "Payment Failed"
                       ? 'Retry Payment'
-                      : paymentStatus,
+                      : widget.paymentStatus,
                   style: TextStyle(
-                    color: paymentStatus == "Payment Failed"
+                    color: widget.paymentStatus == "Payment Failed"
                         ? Colors.red
                         : Colors.black,
                   ),
@@ -188,16 +242,15 @@ class OrderDetails extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: currentStep >= 1
+              onPressed: widget.currentStep >= 1 || _isOrderCancelled
                   ? null
                   : () => _showCancelReasonDialog(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: currentStep >= 1 ? Colors.grey : Colors.red,
+                backgroundColor: widget.currentStep >= 1 || _isOrderCancelled
+                    ? Colors.grey
+                    : Colors.red,
               ),
-              child: const Text(
-                'Cancel Order',
-                style: TextStyle(fontSize: 16),
-              ),
+              child: const Text('Cancel Order', style: TextStyle(fontSize: 16)),
             ),
           ),
         ],

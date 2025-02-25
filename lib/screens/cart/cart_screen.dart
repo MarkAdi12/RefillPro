@@ -99,7 +99,7 @@ class _CartScreenState extends State<CartScreen> {
                                 onTap: () {
                                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OrderScreen()));
                                 },
-                                child: Text('Add More?'))
+                                child: Text('Add More?', style: TextStyle(fontSize: 16),))
                           ],
                         ),
                         Divider(thickness: 1, color: Colors.grey[400]),

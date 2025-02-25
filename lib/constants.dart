@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // THEME
 const kPrimaryColor = Color(0xFF003566);
+const SecondaryColor = Color.fromARGB(255, 212, 234, 255);
 const kTextColor = Colors.black;
 const headingStyle = TextStyle(
   fontSize: 24,

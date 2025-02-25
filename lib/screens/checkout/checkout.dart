@@ -37,7 +37,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const PlaceOrderCard(), 
+      bottomNavigationBar: PlaceOrderCard(), 
     );
   }
 }

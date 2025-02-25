@@ -12,33 +12,31 @@ class FeedbackWidget {
             "Provide Feedback",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width:
-                  MediaQuery.of(context).size.width * 0.8, // Set the width here
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const FeedbackCategory(title: "Delivery Speed"),
-                  const SizedBox(height: 2),
-                  const FeedbackCategory(title: "Product Service"),
-                  const SizedBox(height: 2),
-                  const FeedbackCategory(title: "Overall Experience"),
-                  const SizedBox(height: 2),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const TextField(
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: "Additional feedback...",
-                      ),
+          content: SizedBox(
+            width:
+                MediaQuery.of(context).size.width * 0.8, // Set the width here
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const FeedbackCategory(title: "Delivery Speed"),
+                const SizedBox(height: 2),
+                const FeedbackCategory(title: "Product Service"),
+                const SizedBox(height: 2),
+                const FeedbackCategory(title: "Overall Experience"),
+                const SizedBox(height: 2),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const TextField(
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Additional feedback...",
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           actions: [

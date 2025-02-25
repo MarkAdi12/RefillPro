@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/auth_service.dart';
@@ -57,13 +59,20 @@ class _SignFormState extends State<SignForm> {
       String accessToken = tokens['access'];
       print("Access Token: $accessToken");
       await _secureStorage.write(key: 'access_token', value: accessToken);
+
       final userData = await _authService.getUser(accessToken);
       if (userData != null) {
+        // Store user data locally to avoid repeat API calls
+        await _secureStorage.write(
+            key: 'user_data', value: jsonEncode(userData));
+
+            print((userData));
+
         // Get the FCM token
         String? fcmToken = await _secureStorage.read(key: 'fcm_token');
         if (fcmToken == null || fcmToken.isEmpty) {
           print("fcm empty");
-          return; 
+          return;
         } else {
           print("FCM token found: $fcmToken");
         }
@@ -79,7 +88,7 @@ class _SignFormState extends State<SignForm> {
           if (response != null) {
             print('FCM token saved');
           } else {
-            print('FCM token failed to saved');
+            print('FCM token failed to save');
           }
         } catch (e) {
           print('Error updating FCM token: $e');
@@ -91,6 +100,7 @@ class _SignFormState extends State<SignForm> {
         );
       } else {
         setState(() {
+          _errorMessage = "Failed to retrieve user data.";
         });
       }
     } else {

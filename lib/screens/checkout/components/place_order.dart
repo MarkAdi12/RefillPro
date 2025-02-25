@@ -1,4 +1,5 @@
 import 'package:customer_frontend/screens/init_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -10,11 +11,19 @@ import 'package:customer_frontend/controller/cart_controller.dart';
 import 'package:customer_frontend/controller/payment_controller.dart';
 
 class PlaceOrderCard extends StatelessWidget {
-  const PlaceOrderCard({super.key});
+  PlaceOrderCard({super.key});
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
   Future<bool> _hasPendingOrder(String accessToken) async {
     final orders = await OrderListService().fetchOrders(accessToken);
-    return orders.any((order) => order['status'] == 0); 
+    return orders.any((order) => [0, 1, 3].contains(order['status']));
+  }
+
+  Future<void> _updateOrderStatusInFirebase(String orderId, int status) async {
+    await _database.child('orders/$orderId').set({
+      'status': status,
+    });
+    print('Order $orderId status updated to $status');
   }
 
   @override
@@ -55,45 +64,60 @@ class PlaceOrderCard extends StatelessWidget {
                   print("No access token found!");
                   return;
                 }
-
-                // Check for pending orders before proceeding
+               String totalAmount = cartController.calculateTotal();
                 bool hasPendingOrder = await _hasPendingOrder(accessToken);
                 if (hasPendingOrder) {
-                  // Show dialog if there's a pending order
                   _showPendingOrderDialog(context);
                   return;
                 }
 
-                // ✅ Show Loading Dialog
                 showDialog(
                   context: context,
-                  barrierDismissible: false, // Prevent dismissing
+                  barrierDismissible: false,
                   builder: (context) {
                     return const Center(
-                      child: CircularProgressIndicator(), // Loading spinner
+                      child: CircularProgressIndicator(),
                     );
                   },
                 );
 
-                //  Call API to place order
                 try {
-                  int? orderId = await PlaceOrderService.placeOrder(accessToken);
+                  int? orderId =
+                      await PlaceOrderService.placeOrder(accessToken);
+                  print('Order ID received: $orderId');
+
                   if (orderId == null) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Failed to retrieve order ID")),
+                      const SnackBar(
+                          content: Text("Failed to retrieve order ID")),
                     );
                     return;
                   }
 
+                  // Write orderId to secure storage
+                  await _secureStorage.write(
+                      key: 'tracking_order_id', value: orderId.toString());
+                  print('tracking_order_id written: $orderId');
+
+                  // Debug: Read back the value immediately
+                  String? storedOrderId =
+                      await _secureStorage.read(key: 'tracking_order_id');
+                  print('tracking_order_id read after write: $storedOrderId');
+
                   Navigator.pop(context);
                   cartController.clearCart();
+                  _updateOrderStatusInFirebase(orderId.toString(), 0);
 
-                  if (paymentController.selectedPaymentMethod.value == 'Online Payment') {
+                  if (paymentController.selectedPaymentMethod.value ==
+                      'Online Payment') {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PaymentForm(orderID: orderId),
+                        builder: (context) => PaymentForm(
+                          orderID: orderId,
+                          amount: totalAmount,
+                        ),
                       ),
                     );
                   } else {
@@ -123,17 +147,21 @@ class PlaceOrderCard extends StatelessWidget {
   void _showPendingOrderDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent tapping outside the dialog to dismiss
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Cannot Place Order", style: TextStyle(fontSize: 16)),
+          title:
+              const Text("Cannot Place Order", style: TextStyle(fontSize: 16)),
           content: const Text(
             "You cannot place a new order because you have a pending order. Please complete or cancel your existing order.",
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const InitScreen()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const InitScreen()));
               },
               child: const Text("OK"),
             ),

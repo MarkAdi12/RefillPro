@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
   var remarks = "".obs;
-
   void addToCart(Map<String, dynamic> product) {
     final index =
         cartItems.indexWhere((cartItem) => cartItem['id'] == product['id']);

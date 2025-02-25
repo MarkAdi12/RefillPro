@@ -16,26 +16,40 @@ class OrderTrackingScreen extends StatefulWidget {
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final OrderListService _orderListService = OrderListService();
   final FirebaseDatabase _database = FirebaseDatabase.instance;
 
   bool _isLoading = true;
   String? _errorMessage;
-  List<Map<String, dynamic>> _trackingOrders = [];
-  Map<int, Map<String, dynamic>> _paymentData = {};
+  Map<String, dynamic>? _trackingOrder;
+  final Map<int, Map<String, dynamic>> _paymentData = {};
   double _riderLat = 0.0;
   double _riderLong = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
+    _fetchTrackingOrder();
     _listenToLocationUpdates();
+    _listenToOrderUpdates();
+  }
+
+  void _listenToOrderUpdates() {
+    DatabaseReference ordersRef = _database.ref('orders');
+    ordersRef.onChildChanged.listen((DatabaseEvent event) {
+      DataSnapshot snapshot = event.snapshot;
+      if (snapshot.exists &&
+          snapshot.key != null &&
+          _trackingOrder != null &&
+          snapshot.key == _trackingOrder!['orderNo']) {
+        print('Order ${snapshot.key} updated in Firebase. Refreshing order...');
+        _fetchTrackingOrder();
+      }
+    });
   }
 
   void _listenToLocationUpdates() {
-    // Real Time tracking of rider location
     DatabaseReference locationRef = _database.ref('location');
     locationRef.onValue.listen((DatabaseEvent event) {
       DataSnapshot snapshot = event.snapshot;
@@ -54,8 +68,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     });
   }
 
-  Future<void> _fetchOrders() async {
-    // Order Retrieve
+  Future<void> _fetchTrackingOrder() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     String? token = await _secureStorage.read(key: 'access_token');
     if (token == null) {
       setState(() {
@@ -65,51 +82,153 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       return;
     }
 
+    // Debug: Print all keys in secure storage
+    final allKeys = await _secureStorage.readAll();
+    print('All keys in secure storage: $allKeys');
+
+    // Debug: Read tracking_order_id
+    String? trackingOrderId =
+        await _secureStorage.read(key: 'tracking_order_id');
+    print('tracking_order_id read in _fetchTrackingOrder: $trackingOrderId');
+
+    if (trackingOrderId == null) {
+      print('No tracking order ID found in secure storage');
+      setState(() {
+        _isLoading = false;
+        _trackingOrder = null;
+      });
+      return;
+    }
+
     try {
-      List<dynamic> items = await _orderListService.fetchOrders(token);
+      final orders = await _orderListService.fetchOrders(token);
+
+      // Find the specific order by trackingOrderId
+      final order = orders.firstWhere(
+        (order) => order['id'].toString() == trackingOrderId,
+        orElse: () => null,
+      );
+
+      if (order == null) {
+        // Order not found
+        setState(() {
+          _isLoading = false;
+          _errorMessage = "Order not found.";
+        });
+        return;
+      }
+
+      // Fetch payment data if not already cached
+      if (!_paymentData.containsKey(order['id'])) {
+        final paymentData =
+            await _orderListService.retrievePayment(token, order['id']);
+        if (paymentData != null) {
+          _paymentData[order['id']] = paymentData;
+        }
+      }
+
+      // Fetch customer details
       AuthService authService = AuthService();
       Map<String, dynamic>? customerData = await authService.getUser(token);
       String customerName = customerData != null
           ? "${customerData['first_name']} ${customerData['last_name']}"
           : "Unknown Customer";
-      List<Map<String, dynamic>> orders = [];
-      for (var order in items) {
-        if (order['status'] != 0) continue;
-        // fetch payment
-        final paymentData =
-            await _orderListService.retrievePayment(token, order['id']);
-        if (paymentData != null) {
-          _paymentData[order['id']] = paymentData; // store payment data
-        }
-        List<Map<String, dynamic>> orderItems = [];
-        for (var item in order['order_details']) {
-          orderItems.add({
-            'name': item['product']['name'] ?? "Unknown Product",
-            'quantity': double.parse(item['quantity']).toInt(),
-          });
-        }
 
-        orders.add({
-          'orderNo': order['id'].toString(),
-          'customerName': customerName,
-          'status': order['status'] == 0 ? "Pending" : "Completed",
-          'customerLat': double.parse(order['customer']['lat']),
-          'customerLong': double.parse(order['customer']['long']),
-          'orderItems': orderItems,
+      //order items
+      List<Map<String, dynamic>> orderItems = [];
+      double totalPrice = 0.0; // Initialize total price
+
+      for (var item in order['order_details']) {
+        double itemTotalPrice = double.parse(item['total_price']);
+        totalPrice += itemTotalPrice; // Sum up total prices
+
+        orderItems.add({
+          'name': item['product']['name'] ?? "Unknown Product",
+          'quantity': double.parse(item['quantity']).toInt(),
+          'totalPrice': itemTotalPrice.toString(),
         });
       }
 
+      // Update fetched order
       setState(() {
-        _trackingOrders = orders;
+        _trackingOrder = {
+          'orderNo': order['id'].toString(),
+          'customerName': customerName,
+          'status': order['status'].toString(),
+          'customerLat': double.parse(order['customer']['lat']),
+          'customerLong': double.parse(order['customer']['long']),
+          'orderItems': orderItems,
+          'totalPrice': totalPrice.toString(), 
+        };
         _isLoading = false;
       });
+
+      if (order['status'] == 4) {
+        _showOrderCompletedDialog(context);
+      }
+      if (order['status'] == 5) {
+        _showOrderCancelledDialog(context);
+      }
+      if (order['status'] == 6) {
+        _showOrderCancelledDialog(context);
+      }
     } catch (e) {
-      debugPrint("Error loading orders: $e");
+      debugPrint("Error loading order: $e");
       setState(() {
         _isLoading = false;
-        _errorMessage = "Failed to load tracking orders.";
+        _errorMessage = "Failed to load tracking order.";
       });
     }
+  }
+
+  void _showOrderCancelledDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Order Cancelled", style: TextStyle(fontSize: 12)),
+          content: const Text("Your order has been cancelled. Thank you!"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await _secureStorage.delete(key: 'tracking_order_id');
+                Navigator.of(context).pop();
+                setState(() {
+                  _trackingOrder = null;
+                });
+              },
+              child: const Text("Done"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOrderCompletedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Order Completed", style: TextStyle(fontSize: 18)),
+          content: const Text("Your order has been completed. Thank you!"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await _secureStorage.delete(key: 'tracking_order_id');
+                Navigator.of(context).pop(); // Close the dialog
+                setState(() {
+                  _trackingOrder = null; // Clear the tracking order
+                });
+              },
+              child: const Text("Done"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -121,65 +240,63 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(child: Text(_errorMessage!))
-              : _trackingOrders.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text("No Active Orders"),
-                          Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 8),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => OrderScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text('Place An Order'),
-                            ),
-                          ),
-                        ],
+          : _trackingOrder == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_errorMessage ??
+                          "No Active Orders"), // Display error message
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 8),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrderScreen(),
+                              ),
+                            );
+                          },
+                          child: Text('Place An Order'),
+                        ),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _trackingOrders.length,
-                      itemBuilder: (context, index) {
-                        final order = _trackingOrders[index];
-                        int orderStatus = int.tryParse(order['status'].toString()) ?? 0; 
-                        return Column(
-                          children: [
-                            orderStatus == 0
-                                ? Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Image.asset("assets/prepairing.gif", width: 300, height: 300)
-                                  )
-                                : _buildLocationContainer(
-                                    order['customerLat'],
-                                    order['customerLong'],
-                                    _riderLat,
-                                    _riderLong,
-                                    order['customerName'],
-                                  ),
-                            OrderStatus(status: orderStatus),
-                            OrderDetails(
-                              currentStep: orderStatus == 0 ? 0 : 1,
-                              orderNo: order['orderNo'],
-                              customerName: order['customerName'],
-                              status: order['status'],
-                              orderItems: order['orderItems'],
-                              paymentStatus: _getPaymentStatus(
-                                  int.parse(order['orderNo'])),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      int.parse(_trackingOrder!['status']) == 0 ||
+                              int.parse(_trackingOrder!['status']) == 1
+                          ? Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Image.asset("assets/prepairing.gif",
+                                  width: 300, height: 300),
+                            )
+                          : _buildLocationContainer(
+                              _trackingOrder!['customerLat'],
+                              _trackingOrder!['customerLong'],
+                              _riderLat,
+                              _riderLong,
+                              _trackingOrder!['customerName'],
                             ),
-                          ],
-                        );
-                      },
-                    ),
+                      OrderStatus(status: int.parse(_trackingOrder!['status'])),
+                      OrderDetails(
+                        currentStep:
+                            int.parse(_trackingOrder!['status']) == 0 ? 0 : 1,
+                        orderNo: _trackingOrder!['orderNo'],
+                        customerName: _trackingOrder!['customerName'],
+                        status: _trackingOrder!['status'],
+                        orderItems: _trackingOrder!['orderItems'],
+                        paymentStatus: _getPaymentStatus(
+                            int.parse(_trackingOrder!['orderNo'])), 
+                        amount: _trackingOrder!['totalPrice'],
+                      ),
+                    ],
+                  ),
+                ),
     );
   }
 

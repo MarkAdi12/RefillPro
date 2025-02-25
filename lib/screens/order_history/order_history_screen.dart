@@ -64,7 +64,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       List<Map<String, dynamic>> orders = [];
 
       for (var order in items) {
-        if (order['status'] != 1) continue;
+        if (order['status'] != 4) continue;
 
         List<Map<String, dynamic>> orderItems = [];
         for (var item in order['order_details']) {

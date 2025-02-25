@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CheckoutCard extends StatelessWidget {
-  final CartController cartController = Get.find<CartController>();  // Use Get.find to retrieve the controller
+  final CartController cartController = Get.find<CartController>();  
 
   CheckoutCard({super.key});
 

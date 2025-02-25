@@ -42,7 +42,7 @@ class CartCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                children: [                               
+                                children: [
                                   Text(
                                     item['name'],
                                     style: TextStyle(
@@ -51,15 +51,10 @@ class CartCard extends StatelessWidget {
                                       color: kPrimaryColor,
                                     ),
                                   ),
-                                  Spacer(),
-                                  GestureDetector(
-                                      onTap: () {
-                                        cartController.removeFromCart(index);
-                                      },
-                                      child: Icon(Icons.close, size: 16,)),
                                 ],
                               ),
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     '₱${totalPrice.toStringAsFixed(2)}',
@@ -69,26 +64,55 @@ class CartCard extends StatelessWidget {
                                     ),
                                   ),
                                   Spacer(),
-                                  IconButton(
-                                    onPressed: () {
-                                      cartController.decreaseQuantity(index);
-                                    },
-                                    icon:
-                                        Icon(Icons.remove, color: Colors.grey,),
-                                  ),
-                                  Text(
-                                    '$quantity',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      cartController.increaseQuantity(index);
-                                    },
-                                    icon: Icon(Icons.add, color: kPrimaryColor),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: kPrimaryColor,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                cartController
+                                                    .decreaseQuantity(index);
+                                              },
+                                              child: Icon(
+                                                Icons.remove,
+                                                color: Colors.grey,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              '$quantity',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            GestureDetector(
+                                              onTap: () {
+                                                cartController
+                                                    .increaseQuantity(index);
+                                              },
+                                              child: Icon(
+                                                Icons.add,
+                                                color: kPrimaryColor,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ],
                               ),

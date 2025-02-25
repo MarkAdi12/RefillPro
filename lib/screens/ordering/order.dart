@@ -6,6 +6,7 @@ import 'package:customer_frontend/controller/cart_controller.dart';
 import 'package:customer_frontend/screens/cart/cart_screen.dart';
 import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/components/custom_appbar.dart';
+import 'components/product_details.dart';
 
 class OrderScreen extends StatefulWidget {
   @override
@@ -21,6 +22,9 @@ class _OrderScreenState extends State<OrderScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  // Session cache for products
+  static List<dynamic> _productList = [];
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +32,16 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   Future<void> _fetchProducts() async {
+    // Use cached products if available
+    if (_productList.isNotEmpty) {
+      setState(() {
+        _products = _productList;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Fetch products from the API if cache is empty
     String? token = await _secureStorage.read(key: 'access_token');
 
     if (token == null) {
@@ -40,6 +54,10 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       List<dynamic> items = await _itemService.getItems(token);
+
+      // Update session cache
+      _productList = items;
+
       setState(() {
         _products = items;
         _isLoading = false;
@@ -95,7 +113,9 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Available Items'),
+      appBar: CustomAppBar(
+        title: 'Available Items',
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -105,30 +125,33 @@ class _OrderScreenState extends State<OrderScreen> {
                     style: const TextStyle(color: Colors.red),
                   ),
                 )
-              : ListView.builder(
+              : GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, 
+                    crossAxisSpacing: 16, 
+                    mainAxisSpacing: 16, 
+                    childAspectRatio: 0.8, 
+                  ),
                   itemCount: _products.length,
                   itemBuilder: (context, index) {
                     var product = _products[index];
-                    int quantity = 1;
-                    bool isDetailsVisible = false;
-
                     return StatefulBuilder(
                       builder: (context, setState) {
                         return InkWell(
                           onTap: () {
                             setState(() {
-                              isDetailsVisible =
-                                  !isDetailsVisible; // Toggle visibility
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetails(product: product),
+                                ),
+                              );
                             });
                           },
-                          highlightColor:
-                              Colors.transparent, // Remove highlight color
-                          splashColor: Colors.transparent,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20, horizontal: 16),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 16),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -143,89 +166,39 @@ class _OrderScreenState extends State<OrderScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      product['name'],
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: kPrimaryColor,
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        'assets/slim.png',
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                    Text(
-                                      '₱ ${product['price']}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w400),
-                                    ),
-                                  ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  product['name'],
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
-                                if (isDetailsVisible) ...[
-                                  SizedBox(height: 8),
-                                  Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              if (quantity > 1) {
-                                                setState(() {
-                                                  quantity--;
-                                                });
-                                              }
-                                            },
-                                            icon: const Icon(Icons.remove, color: Colors.grey,),
-                                            color: kPrimaryColor,
-                                          ),
-                                          Text(
-                                            '$quantity',
-                                            style:
-                                                const TextStyle(fontSize: 16),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                quantity++;
-                                              });
-                                            },
-                                            icon: const Icon(Icons.add, color: kPrimaryColor),
-                                          ),
-                                          Spacer(),
-                                        ElevatedButton(
-                                        onPressed: () {
-                                          for (int i = 0; i < quantity; i++) {
-                                            cartController.addToCart(product);
-                                          }
-                                          _showAddToCartDialog(context);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: kPrimaryColor,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
-                                          minimumSize: const Size(100,
-                                              36), // Smaller width & height
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Add to Cart',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                        ],
-                                      ),
-                                      
-                                    ],
+                                Text(
+                                  '₱ ${product['price']}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),

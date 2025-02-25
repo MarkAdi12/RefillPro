@@ -3,6 +3,8 @@ import 'package:customer_frontend/screens/account/components/edit_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:convert';
 
 class ViewProfile extends StatefulWidget {
   const ViewProfile({super.key});
@@ -13,33 +15,50 @@ class ViewProfile extends StatefulWidget {
 
 class _ViewProfileState extends State<ViewProfile> {
   final _secureStorage = const FlutterSecureStorage();
-  final AuthService _authService = AuthService();
 
-  Map<String, dynamic>? userData;
+
+  String? name;
+  String? address;
+  String? phoneNumber;
+  String? userName;
+  String? email;
+  bool isLoading = true;
+  LatLng? userLocation;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _loadUserAddress();
   }
 
-  Future<void> _fetchUserData() async {
-    String? accessToken = await _secureStorage.read(key: 'access_token');
-    if (accessToken == null) {
-      print("No access token found");
-      return;
-    }
+  Future<void> _loadUserAddress() async {
+    String? userData = await _secureStorage.read(key: 'user_data');
 
-    final userInfo = await _authService.getUser(accessToken);
-    if (userInfo != null) {
+    if (userData != null) {
+      final userMap = jsonDecode(userData);
+      double lat = double.tryParse(userMap['lat']?.toString() ?? '0') ?? 0.0;
+      double lng = double.tryParse(userMap['long']?.toString() ?? '0') ?? 0.0;
       setState(() {
-        userData = userInfo;
+        name = "${userMap['first_name']} ${userMap['last_name']}";
+        address = userMap['address'] ?? 'No address available';
+        phoneNumber = userMap['phone_number'] ?? 'No phone number available';
+        userName = userMap['username'] ?? 'NA';
+        email = userMap['email'] ?? 'No email available';
+        print("Email after setState: $email");
+        userLocation = LatLng(lat, lng);
+        isLoading = false;
+         print(userData);
       });
+    } else {
+      setState(() => isLoading = false);
+        print(userData);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+  
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -53,43 +72,29 @@ class _ViewProfileState extends State<ViewProfile> {
                 context,
                 MaterialPageRoute(builder: (context) => EditProfile()),
               );
-
               if (updated == true) {
-                _fetchUserData(); 
+                _loadUserAddress();
               }
             },
-            child: Text('Edit', style: TextStyle(color: Colors.white)),
+            child: const Text('Edit', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      body: userData == null
+      body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  const ProfilePic(),
-                  Text(
-                    userData?["first_name"] != null &&
-                            userData?["last_name"] != null
-                        ? "${userData?["first_name"]} ${userData?["last_name"]}"
-                        : "N/A",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Divider(height: 32.0),
-                  Info(
-                      infoKey: "Username",
-                      info: userData?["username"] ?? "N/A"),
-                  Info(infoKey: "Address", info: userData?["address"] ?? "N/A"),
-                  Info(
-                      infoKey: "Mobile Number",
-                      info: userData?["phone_number"] ?? "N/A"),
-                  Info(
-                      infoKey: "Email Address",
-                      info: userData?["email"] ?? "N/A"),
-                  const SizedBox(height: 16.0),
-                ],
-              ),
+              child: Column(children: [
+                const ProfilePic(),
+                Text(
+                  name ?? "N/A",
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const Divider(height: 32.0),
+                Info(infoKey: "Email", info: email ?? "N/A"),
+                Info(infoKey: "Address", info: address ?? "N/A"),
+                Info(infoKey: "Mobile Number", info: phoneNumber ?? "N/A"),
+              ]),
             ),
     );
   }
@@ -105,7 +110,7 @@ class ProfilePic extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 16.0),
       child: const CircleAvatar(
         radius: 50,
-        backgroundColor: kPrimaryColor, 
+        backgroundColor: kPrimaryColor,
         child: Icon(
           Icons.person,
           size: 50,
@@ -116,13 +121,8 @@ class ProfilePic extends StatelessWidget {
   }
 }
 
-
 class Info extends StatelessWidget {
-  const Info({
-    super.key,
-    required this.infoKey,
-    required this.info,
-  });
+  const Info({super.key, required this.infoKey, required this.info});
 
   final String infoKey, info;
 
@@ -145,16 +145,17 @@ class Info extends StatelessWidget {
                       .withOpacity(0.8),
                 ),
               ),
-              Text(
-                info.length > 20 ? '${info.substring(0, 20)}...' : info,
-                style: const TextStyle(fontSize: 16),
-                softWrap: true,
-                overflow: TextOverflow.visible,
-              )
+              Flexible(
+                child: Text(
+                  info.length > 20 ? '${info.substring(0, 20)}...' : info,
+                  style: const TextStyle(fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 14),
-          Divider(),
+          const SizedBox(height: 14),
+          const Divider(),
         ],
       ),
     );
