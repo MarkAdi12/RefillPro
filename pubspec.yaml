@@ -44,6 +44,9 @@ flutter:
         - asset: assets/fonts/muli/Eina03.ttf
   assets:
     - assets/prepairing.gif  
-    - assets/slim.png
-    - assets/round.png
+    - assets/Slim Container with Water.png
+    - assets/Round Container with Water.png
+    - assets/Water Bottle.png
+    - assets/default.png
+    - assets/banner.png
 

@@ -120,7 +120,7 @@ class _SignFormState extends State<SignForm> {
       child: Column(
         children: [
           TextFormField(
-            controller: _phoneController..text = "mark1",
+            controller: _phoneController,
             keyboardType: TextInputType.text,
             decoration: const InputDecoration(
               labelText: "Username",
@@ -132,7 +132,7 @@ class _SignFormState extends State<SignForm> {
           const SizedBox(height: 20),
           TextFormField(
             obscureText: _obscureText,
-            controller: _passwordController..text = "Teentitans2",
+            controller: _passwordController,
             decoration: InputDecoration(
               labelText: "Password",
               labelStyle: TextStyle(color: kPrimaryColor),

@@ -122,12 +122,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       child: Container(
                         height: 200,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                              12), // Ensure image is also clipped
+                          child: Image.asset(
+                            'assets/banner.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image_not_supported,
+                                    size: 50, color: Colors.grey),
+                          ),
                         ),
                       ),
                     ),
@@ -189,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Image.asset(
-                                    'assets/slim.png',
+                                    'assets/default.png',
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -315,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Image.asset(
-                                    'assets/round.png',
+                                    'assets/default.png',
                                     fit: BoxFit.cover,
                                   ),
                                 ),

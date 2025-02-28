@@ -1,8 +1,11 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:customer_frontend/screens/track_order/components/order_status.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/order_list_service.dart';
 import '../../services/auth_service.dart';
 import 'components/order_details.dart';
@@ -102,15 +105,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     try {
       final orders = await _orderListService.fetchOrders(token);
-
-      // Find the specific order by trackingOrderId
       final order = orders.firstWhere(
         (order) => order['id'].toString() == trackingOrderId,
         orElse: () => null,
       );
 
       if (order == null) {
-        // Order not found
         setState(() {
           _isLoading = false;
           _errorMessage = "Order not found.";
@@ -118,7 +118,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return;
       }
 
-      // Fetch payment data if not already cached
       if (!_paymentData.containsKey(order['id'])) {
         final paymentData =
             await _orderListService.retrievePayment(token, order['id']);
@@ -158,7 +157,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           'customerLat': double.parse(order['customer']['lat']),
           'customerLong': double.parse(order['customer']['long']),
           'orderItems': orderItems,
-          'totalPrice': totalPrice.toString(), 
+          'totalPrice': totalPrice.toString(),
         };
         _isLoading = false;
       });
@@ -168,6 +167,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       }
       if (order['status'] == 5) {
         _showOrderCancelledDialog(context);
+        await clearOrderHistory();
       }
       if (order['status'] == 6) {
         _showOrderCancelledDialog(context);
@@ -179,6 +179,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         _errorMessage = "Failed to load tracking order.";
       });
     }
+  }
+
+  Future<void> clearOrderHistory() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('order_history');
+    print("Order history cleared!");
   }
 
   void _showOrderCancelledDialog(BuildContext context) {
@@ -245,8 +251,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage ??
-                          "No Active Orders"), // Display error message
+                      Text(_errorMessage ?? "No Active Orders"),
                       Container(
                         margin: const EdgeInsets.symmetric(
                             horizontal: 18, vertical: 8),
@@ -291,7 +296,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         status: _trackingOrder!['status'],
                         orderItems: _trackingOrder!['orderItems'],
                         paymentStatus: _getPaymentStatus(
-                            int.parse(_trackingOrder!['orderNo'])), 
+                            int.parse(_trackingOrder!['orderNo'])),
                         amount: _trackingOrder!['totalPrice'],
                       ),
                     ],

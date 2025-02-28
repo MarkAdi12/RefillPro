@@ -6,9 +6,12 @@ import '../../cart/cart_screen.dart';
 import '../order.dart';
 
 class ProductDetails extends StatefulWidget {
-  final dynamic product; 
+  final dynamic product;
+  final String imagePath;
 
-  ProductDetails({super.key, required this.product});
+  const ProductDetails(
+      {Key? key, required this.product, required this.imagePath})
+      : super(key: key);
 
   @override
   State<ProductDetails> createState() => _ProductDetailsState();
@@ -81,8 +84,12 @@ class _ProductDetailsState extends State<ProductDetails> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  'assets/slim.png',
+                  widget.imagePath,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.grey),
                 ),
               ),
             ),
@@ -116,6 +123,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                       widget.product['description'] ??
                           'No description available',
                       style: const TextStyle(fontSize: 14, color: Colors.white),
+                      maxLines: 7,
+                      overflow: TextOverflow
+                          .ellipsis, 
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -123,9 +133,13 @@ class _ProductDetailsState extends State<ProductDetails> {
                         Column(
                           children: [
                             Text(
-                              '${double.parse(widget.product['weight']).toInt()}ml',
+                              widget.product['weight'] == '18927.10'
+                                  ? '5 Gal'
+                                  : '${double.parse(widget.product['weight']).toInt()}ml',
                               style: const TextStyle(
-                                  fontSize: 16, color: Colors.white),
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
                             ),
                             Text(
                               '₱${widget.product['price']}',
@@ -178,28 +192,30 @@ class _ProductDetailsState extends State<ProductDetails> {
                         )
                       ],
                     ),
-                    SizedBox(height: 8),
                     Divider(),
-                    const SizedBox(height: 40),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          for (int i = 0; i < quantity; i++) {
-                            cartController.addToCart(widget.product);
-                          }
-                          _showAddToCartDialog(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 20), // Adjust height
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        margin: const EdgeInsets.all(16),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            for (int i = 0; i < quantity; i++) {
+                              cartController.addToCart(widget.product);
+                            }
+                            _showAddToCartDialog(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 20), // Adjust height
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Add to Cart',
-                          style: TextStyle(fontSize: 16, color: kPrimaryColor),
+                          child: const Text(
+                            'Add to Cart',
+                            style:
+                                TextStyle(fontSize: 16, color: kPrimaryColor),
+                          ),
                         ),
                       ),
                     ),

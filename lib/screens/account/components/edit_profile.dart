@@ -25,6 +25,7 @@ class _EditProfileState extends State<EditProfile> {
 
   Map<String, dynamic>? userData;
   bool _MapIsLoading = false;
+  List<dynamic> _predictions = [];
   bool _isEditing = true;
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -240,6 +241,30 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
+  Future<void> _getPlacePredictions(String input) async {
+    final double latitude = 14.7168117;
+    final double longitude = 120.95534;
+    final int radius = 500;
+
+    String baseUrl =
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json";
+
+    String request =
+        "$baseUrl?input=$input&key=$apiKey&location=$latitude,$longitude"
+        "&radius=$radius&strictbounds&types=geocode&components=country:PH";
+
+    final response = await http.get(Uri.parse(request));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _predictions = data["predictions"];
+      });
+    } else {
+      print("Failed to fetch places: ${response.statusCode}");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -281,7 +306,7 @@ class _EditProfileState extends State<EditProfile> {
                         controller: _phoneNumberController,
                         value: userData?["phone_number"] ?? "N/A"),
                     const SizedBox(height: 16),
-                    _buildAddressCard(), // Google Places for Address
+                    _buildAddressCard(),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -460,63 +485,57 @@ class _EditProfileState extends State<EditProfile> {
               ],
             ),
           const SizedBox(height: 8),
-          if (_isEditing)
-            GooglePlaceAutoCompleteTextField(
-              textEditingController: _addressController,
-              googleAPIKey: apiKey,
-              inputDecoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Enter your address",
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check),
-                  onPressed: () {
+          TextField(
+            controller: _addressController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: "Enter your address",
+              suffixIcon: IconButton(
+                icon: Icon(Icons.check),
+                onPressed: () {
+                  setState(() {
+                    _predictions.clear();
+                    _isEditing = false;
+                  });
+                  Future.delayed(Duration(milliseconds: 1), () {
                     setState(() {
-                      _isEditing = false;
+                      _predictions.clear();
+                      _isEditing = true;
                     });
-                    Future.delayed(Duration(milliseconds: 1), () {
-                      setState(() {
-                        _isEditing = true;
-                      });
-                    });
-                  },
-                ),
+                  });
+                },
               ),
-              debounceTime: 400,
-              countries: ["PH"],
-              isLatLngRequired: true,
-              focusNode: _addressFocusNode,
-              isCrossBtnShown: false,
-              getPlaceDetailWithLatLng: (placeDetail) {
+            ),
+            onChanged: (value) {
+              if (value.trim().isNotEmpty) {
+                _getPlacePredictions(value);
+              } else {
                 setState(() {
-                  selectedLat = double.tryParse(placeDetail.lat ?? '');
-                  selectedLng = double.tryParse(placeDetail.lng ?? '');
+                  _predictions.clear();
                 });
-                if (_mapController != null &&
-                    selectedLat != null &&
-                    selectedLng != null) {
-                  _mapController!.animateCamera(
-                    CameraUpdate.newLatLng(LatLng(selectedLat!, selectedLng!)),
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+          if (_predictions.isNotEmpty)
+            SizedBox(
+              height: 150,
+              child: ListView.builder(
+                itemCount: _predictions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(_predictions[index]["description"]),
+                    onTap: () {
+                      _addressController.text =
+                          _predictions[index]["description"];
+                      setState(() {
+                        _predictions.clear();
+                      });
+                      FocusScope.of(context).unfocus();
+                    },
                   );
-                }
-              },
-              itemClick: (prediction) {
-                setState(() {
-                  _addressController.text = prediction.description!;
-                });
-                _addressController.selection = TextSelection.fromPosition(
-                  TextPosition(offset: prediction.description!.length),
-                );
-                _addressFocusNode.unfocus();
-                FocusScope.of(context).unfocus();
-                Future.delayed(Duration(milliseconds: 100), () {
-                  _addressController.clearComposing();
-                });
-              },
-            )
-          else
-            Text(
-              _addressController.text.isNotEmpty ? _addressController.text : "",
-              style: const TextStyle(fontSize: 16),
+                },
+              ),
             ),
         ],
       ),

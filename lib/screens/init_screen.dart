@@ -9,7 +9,6 @@ const Color inActiveIconColor = Color(0xFFB6B6B6);
 
 class InitScreen extends StatefulWidget {
   final int initialIndex;
-  
 
   const InitScreen({super.key, this.initialIndex = 0}); // DEFAULT HOME
 
@@ -33,7 +32,7 @@ class _InitScreenState extends State<InitScreen> {
   }
 
   final pages = [
-     HomeScreen(),
+    HomeScreen(),
     OrderTrackingScreen(),
     const OrderHistoryScreen(),
     const ProfileScreen(),
@@ -49,11 +48,11 @@ class _InitScreenState extends State<InitScreen> {
         showSelectedLabels: true,
         showUnselectedLabels: true,
         selectedLabelStyle: TextStyle(fontSize: 12),
-        unselectedLabelStyle: const TextStyle(fontSize: 12), 
+        unselectedLabelStyle: const TextStyle(fontSize: 12),
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: kPrimaryColor, 
-        unselectedItemColor: inActiveIconColor, 
+        selectedItemColor: kPrimaryColor,
+        unselectedItemColor: inActiveIconColor,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.store_outlined, size: 22),
@@ -66,11 +65,9 @@ class _InitScreenState extends State<InitScreen> {
             label: "Track",
           ),
           BottomNavigationBarItem(
-            
             icon: Icon(Icons.history_outlined, size: 22),
             activeIcon: Icon(Icons.history_rounded, size: 26),
             label: "History",
-            
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_pin, size: 22),

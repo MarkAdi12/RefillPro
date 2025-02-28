@@ -3,8 +3,6 @@ import 'package:customer_frontend/services/item_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:customer_frontend/controller/cart_controller.dart';
-import 'package:customer_frontend/screens/cart/cart_screen.dart';
-import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/components/custom_appbar.dart';
 import 'components/product_details.dart';
 
@@ -17,12 +15,9 @@ class _OrderScreenState extends State<OrderScreen> {
   final ItemService _itemService = ItemService();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final CartController cartController = Get.put(CartController());
-
   List<dynamic> _products = [];
   bool _isLoading = true;
   String? _errorMessage;
-
-  // Session cache for products
   static List<dynamic> _productList = [];
 
   @override
@@ -32,7 +27,6 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    // Use cached products if available
     if (_productList.isNotEmpty) {
       setState(() {
         _products = _productList;
@@ -41,7 +35,7 @@ class _OrderScreenState extends State<OrderScreen> {
       return;
     }
 
-    // Fetch products from the API if cache is empty
+    // fetch product
     String? token = await _secureStorage.read(key: 'access_token');
 
     if (token == null) {
@@ -55,7 +49,7 @@ class _OrderScreenState extends State<OrderScreen> {
     try {
       List<dynamic> items = await _itemService.getItems(token);
 
-      // Update session cache
+      // store products
       _productList = items;
 
       setState(() {
@@ -70,44 +64,14 @@ class _OrderScreenState extends State<OrderScreen> {
     }
   }
 
-  void _showAddToCartDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Add to Cart Successful!',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          content:
-              const Text('Would you like to view your cart or add more items?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Add More',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => CartScreen()),
-                );
-              },
-              child: const Text(
-                'View Cart',
-                style: TextStyle(color: kPrimaryColor),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  String getProductImage(String productName) {
+    Map<String, String> productImages = {
+      "Round Container with Water": "assets/Round Container with Water.png",
+      "Slim Container with Water": "assets/Slim Container with Water.png",
+      "Water Bottle (500ml)": "assets/Water Bottle.png",
+    };
+
+    return productImages[productName] ?? "assets/default.png";
   }
 
   @override
@@ -128,10 +92,10 @@ class _OrderScreenState extends State<OrderScreen> {
               : GridView.builder(
                   padding: const EdgeInsets.all(12),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, 
-                    crossAxisSpacing: 16, 
-                    mainAxisSpacing: 16, 
-                    childAspectRatio: 0.8, 
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.8,
                   ),
                   itemCount: _products.length,
                   itemBuilder: (context, index) {
@@ -145,7 +109,7 @@ class _OrderScreenState extends State<OrderScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      ProductDetails(product: product),
+                                      ProductDetails(product: product, imagePath: getProductImage(product['name']),),
                                 ),
                               );
                             });
@@ -172,12 +136,13 @@ class _OrderScreenState extends State<OrderScreen> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.asset(
-                                        'assets/slim.png',
-                                        fit: BoxFit.cover,
-                                      ),
+                                    child: Image.asset(
+                                      getProductImage(product['name']),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error,
+                                              stackTrace) =>
+                                          const Icon(Icons.image_not_supported,
+                                              size: 50, color: Colors.grey),
                                     ),
                                   ),
                                 ),

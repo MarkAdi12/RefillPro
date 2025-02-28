@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../../services/order_list_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../constants.dart';
@@ -18,22 +20,20 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final OrderListService _orderListService = OrderListService();
-
+  List<Map<String, dynamic>> _orderHistory = [];
   bool _isLoading = true;
   String? _errorMessage;
-  List<Map<String, dynamic>> _orderHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
+    _loadOrderHistory();
   }
 
   String formatDateTime(dynamic dateTime) {
     if (dateTime == null || dateTime.toString().isEmpty) {
       return "No delivery date";
     }
-
     try {
       DateTime parsedDate = DateTime.parse(dateTime.toString()).toLocal();
       return DateFormat('MMMM dd, yyyy').format(parsedDate);
@@ -41,6 +41,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       debugPrint("Error parsing date: $e");
       return "Invalid date";
     }
+  }
+
+  Future<void> _loadOrderHistory() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? storedOrders = prefs.getString('order_history');
+
+    if (storedOrders != null) {
+      setState(() {
+        _orderHistory = List<Map<String, dynamic>>.from(json.decode(storedOrders));
+        _isLoading = false;
+      });
+    }
+
+    _fetchOrders();
   }
 
   Future<void> _fetchOrders() async {
@@ -91,6 +105,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         _orderHistory = orders;
         _isLoading = false;
       });
+
+      // store
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('order_history', json.encode(orders));
+
     } catch (e) {
       debugPrint("Error loading orders: $e");
       setState(() {

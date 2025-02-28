@@ -25,10 +25,10 @@ class OrderSummary extends StatelessWidget {
             builder: (controller) {
               return Column(
                 children: controller.cartItems.map((item) {
-                  double price = double.tryParse(item['price'].toString()) ?? 0.0;
+                  double price =
+                      double.tryParse(item['price'].toString()) ?? 0.0;
                   int quantity = item['quantity'] as int;
                   double totalPrice = price * quantity;
-
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2.0),
                     child: Row(
@@ -40,7 +40,8 @@ class OrderSummary extends StatelessWidget {
                         ),
                         Text(
                           '₱${totalPrice.toStringAsFixed(2)}',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -88,5 +89,3 @@ class OrderSummary extends StatelessWidget {
     );
   }
 }
-
-
