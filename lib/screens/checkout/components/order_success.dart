@@ -27,6 +27,7 @@ class OrderSuccessScreen extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               
             ),
+            SizedBox(height: 12),
             CircularProgressIndicator()
           ],
         ),

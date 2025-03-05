@@ -79,14 +79,14 @@ class AuthService {
       },
     );
 
-    print('Logout response: ${response.body}'); // Debugging
+    print('Logout response: ${response.body}'); 
 
     if (response.statusCode == 200) {
       print('Logout successful');
-      return true; // Indicate success
+      return true; 
     } else {
       print('Logout failed: ${response.body}');
-      return false; // Indicate failure
+      return false; 
     }
   }
 

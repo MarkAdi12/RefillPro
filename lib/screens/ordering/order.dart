@@ -65,13 +65,19 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   String getProductImage(String productName) {
-    Map<String, String> productImages = {
-      "Round Container with Water": "assets/Round Container with Water.png",
-      "Slim Container with Water": "assets/Slim Container with Water.png",
-      "Water Bottle (500ml)": "assets/Water Bottle.png",
-    };
+   
+    String lowerCaseName = productName.toLowerCase();
 
-    return productImages[productName] ?? "assets/default.png";
+   
+    if (lowerCaseName.contains("water bottle")) {
+      return "assets/Water Bottle.png";
+    } else if (lowerCaseName.contains("water slim")) {
+      return "assets/Slim Container with Water.png";
+    } else if (lowerCaseName.contains("water round")) {
+      return "assets/Round Container with Water.png";
+    }
+
+    return "assets/default.png"; 
   }
 
   @override
@@ -108,8 +114,10 @@ class _OrderScreenState extends State<OrderScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductDetails(product: product, imagePath: getProductImage(product['name']),),
+                                  builder: (context) => ProductDetails(
+                                    product: product,
+                                    imagePath: getProductImage(product['name']),
+                                  ),
                                 ),
                               );
                             });

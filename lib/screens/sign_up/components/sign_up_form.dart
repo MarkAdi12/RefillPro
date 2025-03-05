@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:customer_frontend/screens/sign_up/components/sign_up_success.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
@@ -86,6 +87,24 @@ class _SignUpFormState extends State<SignUpForm> {
     } else {
       print("Failed to fetch places: ${response.statusCode}");
     }
+  }
+
+  Future<Map<String, dynamic>?> getPlaceDetails(String placeId) async {
+    final String url =
+        "https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data["status"] == "OK") {
+          return data["result"];
+        }
+      }
+    } catch (e) {
+      print("Error fetching place details: $e");
+    }
+    return null;
   }
 
   void _onMarkerDragEnd(LatLng newPosition) async {
@@ -185,8 +204,17 @@ class _SignUpFormState extends State<SignUpForm> {
             labelText: "Email",
             hintText: "Enter your email",
             keyboardType: TextInputType.emailAddress,
-            validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter an email' : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter an email';
+              }
+              final emailRegex =
+                  RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+              if (!emailRegex.hasMatch(value)) {
+                return 'Enter a valid email address';
+              }
+              return null;
+            },
           ),
           _buildTextField(
             controller: _firstNameController,
@@ -211,38 +239,35 @@ class _SignUpFormState extends State<SignUpForm> {
                 value?.isEmpty ?? true ? 'Please enter a phone number' : null,
           ),
           SizedBox(height: 10),
-          if (_isEditing)
-            TextField(
-              controller: _addressController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Enter your address",
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check),
-                  onPressed: () {
-                    setState(() {
+          TextFormField(
+            controller: _addressController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Address",
+              hintText: "Enter your address",
+              suffixIcon: IconButton(
+                icon: Icon(Icons.check),
+                onPressed: () {
+                  setState(() {
+                    if (_addressController.text.trim().isNotEmpty) {
                       _predictions.clear();
                       _isEditing = false;
-                    });
-                    Future.delayed(Duration(milliseconds: 1), () {
-                      setState(() {
-                        _predictions.clear();
-                        _isEditing = true;
-                      });
-                    });
-                  },
-                ),
-              ),
-              onChanged: (value) {
-                if (value.trim().isNotEmpty) {
-                  _getPlacePredictions(value);
-                } else {
-                  setState(() {
-                    _predictions.clear();
+                    }
                   });
-                }
-              },
+                },
+              ),
             ),
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please enter your address' : null,
+            onChanged: (value) {
+              setState(() {}); // Triggers UI update to show/hide error text
+              if (value.trim().isNotEmpty) {
+                _getPlacePredictions(value);
+              } else {
+                _predictions.clear();
+              }
+            },
+          ),
           const SizedBox(height: 8),
           if (_predictions.isNotEmpty)
             SizedBox(
@@ -252,13 +277,28 @@ class _SignUpFormState extends State<SignUpForm> {
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text(_predictions[index]["description"]),
-                    onTap: () {
-                      _addressController.text =
-                          _predictions[index]["description"];
-                      setState(() {
-                        _predictions.clear();
-                      });
-                      FocusScope.of(context).unfocus();
+                    onTap: () async {
+                      final placeId = _predictions[index]["place_id"];
+                      final placeDetails = await getPlaceDetails(placeId);
+
+                      if (placeDetails != null) {
+                        final lat = placeDetails["geometry"]["location"]["lat"];
+                        final lng = placeDetails["geometry"]["location"]["lng"];
+
+                        setState(() {
+                          selectedLat = lat;
+                          selectedLng = lng;
+                          _addressController.text =
+                              _predictions[index]["description"];
+                          _predictions.clear();
+                        });
+
+                        if (_mapController != null) {
+                          _mapController!.animateCamera(
+                            CameraUpdate.newLatLng(LatLng(lat, lng)),
+                          );
+                        }
+                      }
                     },
                   );
                 },
@@ -338,7 +378,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   } else {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => SignInScreen()),
+                      MaterialPageRoute(builder: (context) => SignUpSuccess()),
                     );
                   }
                 }

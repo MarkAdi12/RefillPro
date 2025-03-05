@@ -27,22 +27,8 @@ class _SignFormState extends State<SignForm> {
   @override
   void initState() {
     super.initState();
-    _loadStoredToken();
   }
 
-  Future<void> _loadStoredToken() async {
-    String? storedToken = await _secureStorage.read(key: 'access_token');
-    if (storedToken != null) {
-      print("🔹 Retrieved Stored Token: $storedToken");
-      final userData = await _authService.getUser(storedToken);
-      if (userData != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => InitScreen()),
-        );
-      }
-    }
-  }
 
   void _login() async {
     setState(() {

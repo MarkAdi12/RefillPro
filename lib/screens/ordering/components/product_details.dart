@@ -72,30 +72,31 @@ class _ProductDetailsState extends State<ProductDetails> {
       appBar: AppBar(
         title: const Text('Product Details'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  widget.imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.image_not_supported,
-                      size: 50,
-                      color: Colors.grey),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                height: 400,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    widget.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.image_not_supported,
+                        size: 50,
+                        color: Colors.grey),
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Container(
+            Container(
+              width: double.infinity, // Ensure it stretches across the screen
               decoration: BoxDecoration(
                 color: kPrimaryColor,
                 borderRadius: const BorderRadius.only(
@@ -107,15 +108,18 @@ class _ProductDetailsState extends State<ProductDetails> {
                 padding:
                     const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          widget.product['name'],
-                          style: const TextStyle(
-                              fontSize: 26, color: Colors.white),
+                        Expanded(
+                          // To avoid overflow issues
+                          child: Text(
+                            widget.product['name'],
+                            style: const TextStyle(
+                                fontSize: 26, color: Colors.white),
+                          ),
                         ),
-                        const SizedBox(height: 10),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -124,40 +128,37 @@ class _ProductDetailsState extends State<ProductDetails> {
                           'No description available',
                       style: const TextStyle(fontSize: 14, color: Colors.white),
                       maxLines: 7,
-                      overflow: TextOverflow
-                          .ellipsis, 
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               widget.product['weight'] == '18927.10'
                                   ? '5 Gal'
                                   : '${double.parse(widget.product['weight']).toInt()}ml',
                               style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                                  fontSize: 16, color: Colors.white),
                             ),
                             Text(
                               '₱${widget.product['price']}',
                               style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
+                                  fontSize: 18, color: Colors.white),
                             ),
                           ],
                         ),
-                        Spacer(),
+                        const Spacer(),
                         Container(
                           decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2.0,
-                              ),
-                              borderRadius: BorderRadius.circular(16)),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2.0,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Row(
                             children: [
                               IconButton(
@@ -192,39 +193,35 @@ class _ProductDetailsState extends State<ProductDetails> {
                         )
                       ],
                     ),
-                    Divider(),
-                    Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.all(16),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            for (int i = 0; i < quantity; i++) {
-                              cartController.addToCart(widget.product);
-                            }
-                            _showAddToCartDialog(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20), // Adjust height
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                    const Divider(),
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          for (int i = 0; i < quantity; i++) {
+                            cartController.addToCart(widget.product);
+                          }
+                          _showAddToCartDialog(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Text(
-                            'Add to Cart',
-                            style:
-                                TextStyle(fontSize: 16, color: kPrimaryColor),
-                          ),
+                        ),
+                        child: const Text(
+                          'Add to Cart',
+                          style: TextStyle(fontSize: 16, color: kPrimaryColor),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
