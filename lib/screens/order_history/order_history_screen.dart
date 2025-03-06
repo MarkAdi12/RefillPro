@@ -49,7 +49,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
     if (storedOrders != null) {
       setState(() {
-        _orderHistory = List<Map<String, dynamic>>.from(json.decode(storedOrders));
+        _orderHistory =
+            List<Map<String, dynamic>>.from(json.decode(storedOrders));
         _isLoading = false;
       });
     }
@@ -94,22 +95,25 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
         orders.add({
           'delivery_datetime': formatDateTime(order['delivery_datetime']),
-          'orderNo': order['id'].toString(),
+          'orderNo': order['id'].toString(), // Store as string
           'customerName': customerName,
           'address': customerData?['address'] ?? 'No address provided',
           'orderItems': orderItems,
         });
       }
 
+ 
+      orders.sort(
+          (a, b) => int.parse(b['orderNo']).compareTo(int.parse(a['orderNo'])));
+
       setState(() {
         _orderHistory = orders;
         _isLoading = false;
       });
 
-      // store
+  
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('order_history', json.encode(orders));
-
     } catch (e) {
       debugPrint("Error loading orders: $e");
       setState(() {
@@ -184,7 +188,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.vertical(
                                     bottom: Radius.circular(16)),
-                                 boxShadow: [
+                                boxShadow: [
                                   BoxShadow(
                                     color: Color.fromARGB(255, 122, 122, 122),
                                     blurRadius: 8,

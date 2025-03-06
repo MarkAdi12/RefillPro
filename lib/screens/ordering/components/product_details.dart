@@ -96,7 +96,7 @@ class _ProductDetailsState extends State<ProductDetails> {
               ),
             ),
             Container(
-              width: double.infinity, // Ensure it stretches across the screen
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: kPrimaryColor,
                 borderRadius: const BorderRadius.only(
@@ -113,7 +113,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                     Row(
                       children: [
                         Expanded(
-                          // To avoid overflow issues
                           child: Text(
                             widget.product['name'],
                             style: const TextStyle(
@@ -136,13 +135,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              widget.product['weight'] == '18927.10'
-                                  ? '5 Gal'
-                                  : '${double.parse(widget.product['weight']).toInt()}ml',
-                              style: const TextStyle(
-                                  fontSize: 16, color: Colors.white),
-                            ),
                             Text(
                               '₱${widget.product['price']}',
                               style: const TextStyle(
@@ -182,7 +174,15 @@ class _ProductDetailsState extends State<ProductDetails> {
                               IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    quantity++;
+                                    int limit = (widget.product['name']
+                                            .toLowerCase()
+                                            .contains('water bottle'))
+                                        ? 100
+                                        : 20;
+
+                                    if (quantity < limit) {
+                                      quantity++;
+                                    }
                                   });
                                 },
                                 icon:

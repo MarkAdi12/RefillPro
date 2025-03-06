@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:customer_frontend/screens/init_screen.dart';
@@ -22,15 +23,44 @@ class _SignFormState extends State<SignForm> {
 
   bool _obscureText = true;
   bool _isLoading = false;
+  bool _isLocked = false;
+  int _failedAttempts = 0;
   String? _errorMessage;
+  int _lockTime = 0;
+  Timer? _timer;
 
-  @override
-  void initState() {
-    super.initState();
+  void _startLockTimer() {
+    setState(() {
+      _isLocked = true;
+      _lockTime = 10; 
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_lockTime > 0) {
+        setState(() {
+          _lockTime--;
+        });
+      } else {
+        setState(() {
+          _isLocked = false;
+          _isLoading = false;
+        });
+        _timer?.cancel();
+      }
+    });
   }
 
+  void _unlock() {
+    _timer?.cancel();
+    setState(() {
+      _isLocked = false;
+      _failedAttempts = 0;
+    });
+  }
 
   void _login() async {
+    if (_isLocked) return; // Prevent login attempts if locked
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -42,42 +72,23 @@ class _SignFormState extends State<SignForm> {
     );
 
     if (tokens != null) {
+      setState(() {
+        _failedAttempts = 0;
+        _isLocked = false;
+      });
+
       String accessToken = tokens['access'];
-      print("Access Token: $accessToken");
       await _secureStorage.write(key: 'access_token', value: accessToken);
 
       final userData = await _authService.getUser(accessToken);
       if (userData != null) {
-        // Store user data locally to avoid repeat API calls
         await _secureStorage.write(
             key: 'user_data', value: jsonEncode(userData));
 
-            print((userData));
-
-        // Get the FCM token
         String? fcmToken = await _secureStorage.read(key: 'fcm_token');
-        if (fcmToken == null || fcmToken.isEmpty) {
-          print("fcm empty");
-          return;
-        } else {
-          print("FCM token found: $fcmToken");
-        }
-
-        final updatedData = {
-          "firebase_tokens": fcmToken,
-        };
-        print("🚀 Sending updated data: $updatedData");
-
-        try {
-          final response =
-              await _authService.editUser(accessToken, updatedData);
-          if (response != null) {
-            print('FCM token saved');
-          } else {
-            print('FCM token failed to save');
-          }
-        } catch (e) {
-          print('Error updating FCM token: $e');
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          final updatedData = {"firebase_tokens": fcmToken};
+          await _authService.editUser(accessToken, updatedData);
         }
 
         Navigator.pushReplacement(
@@ -91,13 +102,30 @@ class _SignFormState extends State<SignForm> {
       }
     } else {
       setState(() {
+        _failedAttempts++;
         _errorMessage = "Login failed. Please check your credentials.";
       });
+
+      if (_failedAttempts >= 3) {
+        _startLockTimer();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+        );
+        return;
+      }
     }
 
     setState(() {
       _isLoading = false;
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -144,9 +172,17 @@ class _SignFormState extends State<SignForm> {
                 style: const TextStyle(color: Colors.red),
               ),
             ),
+          if (_isLocked)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                "Locked for $_lockTime seconds",
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _isLoading ? null : _login,
+            onPressed: (_isLoading || _isLocked) ? null : _login,
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text("Continue"),

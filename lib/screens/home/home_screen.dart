@@ -170,29 +170,36 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     ItemCard(
-                      imagePath: 'assets/default.png',
-                      title: 'Slim Water Gallon',
+                      imagePath: 'assets/Slim Container with Water.png',
+                      title: 'Water Slim',
                       size: '5 Gallon',
-                      price: 'PHP 35.00',
+                      price: '35.00',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => OrderScreen()),
+                            builder: (context) => OrderScreen(
+                              autoSelectProductName: 'Water Slim with Faucet',
+                            ),
+                          ),
                         );
                       },
                     ),
                     const SizedBox(height: 12),
                     ItemCard(
-                      imagePath: 'assets/default.png',
-                      title: 'Slim Water Gallon',
+                      imagePath: 'assets/Round Container with Water.png',
+                      title: 'Water Round',
                       size: '5 Gallon',
-                      price: 'PHP 35.00',
+                      price: '35.00',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => OrderScreen()),
+                            builder: (context) => OrderScreen(
+                              autoSelectProductName:
+                                  'Water Round (Bilog)', // auto select
+                            ),
+                          ),
                         );
                       },
                     ),
