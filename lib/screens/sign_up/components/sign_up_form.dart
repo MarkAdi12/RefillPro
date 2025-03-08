@@ -20,6 +20,9 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
+  final _passwordKey = GlobalKey<FormFieldState<String>>();
+  final _userKey = GlobalKey<FormFieldState<String>>();
+  final _confirmPasswordKey = GlobalKey<FormFieldState<String>>();
   final RegistrationService _registrationService = RegistrationService();
   final FocusNode _addressFocusNode = FocusNode();
   GoogleMapController? _mapController;
@@ -68,7 +71,7 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;
     final double longitude = 120.95534;
-    final int radius = 500;
+    final int radius = 3000;
 
     String baseUrl =
         "https://maps.googleapis.com/maps/api/place/autocomplete/json";
@@ -150,13 +153,16 @@ class _SignUpFormState extends State<SignUpForm> {
     required String labelText,
     required String hintText,
     bool obscureText = false,
+    VoidCallback? onEditingComplete,
     TextInputType keyboardType = TextInputType.text,
     FormFieldValidator<String>? validator,
+    Key? key,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
         controller: controller,
+        key: key,
         obscureText: obscureText,
         keyboardType: keyboardType,
         decoration: InputDecoration(
@@ -165,6 +171,7 @@ class _SignUpFormState extends State<SignUpForm> {
           floatingLabelBehavior: FloatingLabelBehavior.always,
         ),
         validator: validator,
+        onEditingComplete: onEditingComplete,
       ),
     );
   }
@@ -176,13 +183,24 @@ class _SignUpFormState extends State<SignUpForm> {
       child: Column(
         children: [
           _buildTextField(
+            key: _userKey,
             controller: _usernameController,
             labelText: "Username",
             hintText: "Enter your username",
-            validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter a username' : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a username';
+              } else if (value.length < 4) {
+                return 'Username must be at least 4 characters long';
+              }
+              return null;
+            },
+            onEditingComplete: () {
+              _userKey.currentState?.validate();
+            },
           ),
           _buildTextField(
+            key: _passwordKey,
             controller: _passwordController,
             labelText: "Password",
             hintText: "Enter your password",
@@ -192,11 +210,20 @@ class _SignUpFormState extends State<SignUpForm> {
                 return 'Please enter a password';
               } else if (value.length < 8) {
                 return 'Password must be at least 8 characters long';
+              } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                return 'Password must contain at least 1 capital letter';
+              } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+                return 'Password must contain at least 1 number';
               }
               return null;
             },
+            onEditingComplete: () {
+              _passwordKey.currentState?.validate();
+            },
           ),
           _buildTextField(
+            key:
+                _confirmPasswordKey, // Use the GlobalKey for the confirm password field
             controller: _confirmPasswordController,
             labelText: "Confirm Password",
             hintText: "Re-enter your password",
@@ -208,6 +235,10 @@ class _SignUpFormState extends State<SignUpForm> {
                 return 'Passwords do not match';
               }
               return null;
+            },
+            onEditingComplete: () {
+              // Validate only the confirm password field
+              _confirmPasswordKey.currentState?.validate();
             },
           ),
           _buildTextField(

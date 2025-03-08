@@ -20,6 +20,7 @@ class _SignFormState extends State<SignForm> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  final _formKey = GlobalKey<FormState>(); // Added form key
 
   bool _obscureText = true;
   bool _isLoading = false;
@@ -32,7 +33,7 @@ class _SignFormState extends State<SignForm> {
   void _startLockTimer() {
     setState(() {
       _isLocked = true;
-      _lockTime = 60; 
+      _lockTime = 60;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -60,6 +61,11 @@ class _SignFormState extends State<SignForm> {
 
   void _login() async {
     if (_isLocked) return; // Prevent login attempts if locked
+
+    // Validate form before attempting login
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -131,6 +137,7 @@ class _SignFormState extends State<SignForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: _formKey, // Attach form key
       child: Column(
         children: [
           TextFormField(
@@ -142,6 +149,12 @@ class _SignFormState extends State<SignForm> {
               hintText: "Enter your Username",
               floatingLabelBehavior: FloatingLabelBehavior.always,
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your username';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 20),
           TextFormField(
@@ -162,6 +175,12 @@ class _SignFormState extends State<SignForm> {
                 },
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 20),
           if (_errorMessage != null)
