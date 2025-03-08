@@ -12,7 +12,7 @@ class SignUpSuccess extends StatefulWidget {
 class _SignUpSuccessState extends State<SignUpSuccess> {
   @override
   Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => SignInScreen()),

@@ -22,7 +22,7 @@ class SignUpScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   const Text("Register Account", style: headingStyle),
                   const Text(
-                    "Complete your details or continue \nwith social media",
+                    "Complete your details",
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),

@@ -27,7 +27,8 @@ class AuthService {
   // Sign in with custom token
   Future<User?> signInWithCustomToken(String token) async {
     try {
-      UserCredential userCredential = await _firebaseAuth.signInWithCustomToken(token);
+      UserCredential userCredential =
+          await _firebaseAuth.signInWithCustomToken(token);
       return userCredential.user;
     } catch (e) {
       print('Error signing in with custom token: $e');
@@ -35,6 +36,7 @@ class AuthService {
     }
   }
 
+  // edit profile
   Future<Map<String, dynamic>?> getUser(String accessToken) async {
     final response = await http.get(
       Uri.parse(userUrl),
@@ -52,20 +54,31 @@ class AuthService {
   }
 
   // Edit User Details
-  Future<Map<String, dynamic>?> editUser(String accessToken, Map<String, dynamic> updatedData) async {
+  Future<Map<String, dynamic>?> editUser(
+      String accessToken, Map<String, dynamic> updatedData) async {
     final response = await http.post(
       Uri.parse(userUrl),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(updatedData), 
+      body: jsonEncode(updatedData),
     );
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body); 
     } else {
-      print('Failed to update user data: ${response.body}');
-      return null;
+      final responseData = jsonDecode(response.body);
+      if (responseData['email'] != null && responseData['email'].isNotEmpty) {
+        throw responseData['email']
+            [0]; 
+      } else if (responseData['username'] != null &&
+          responseData['username'].isNotEmpty) {
+        throw responseData['username']
+            [0]; 
+      } else {
+        throw 'Failed to update user data: ${response.body}';
+      }
     }
   }
 
@@ -79,20 +92,20 @@ class AuthService {
       },
     );
 
-    print('Logout response: ${response.body}'); 
+    print('Logout response: ${response.body}');
 
     if (response.statusCode == 200) {
       print('Logout successful');
-      return true; 
+      return true;
     } else {
       print('Logout failed: ${response.body}');
-      return false; 
+      return false;
     }
   }
 
-
-    final String requestUrl = 'https://refillpro.store/api/v1/password-reset/request/';
-    Future<Map<String, dynamic>?> requestPassword(String email) async {
+  final String requestUrl =
+      'https://refillpro.store/api/v1/password-reset/request/';
+  Future<Map<String, dynamic>?> requestPassword(String email) async {
     // Request for new password
     final response = await http.post(
       Uri.parse(requestUrl),
@@ -108,13 +121,19 @@ class AuthService {
     }
   }
 
-  final String confirmpasswordUrl = 'https://refillpro.store/api/v1/password-reset/confirm/';
-    Future<Map<String, dynamic>?> confirmPassword(String token, String new_password, String confirm_password) async {
+  final String confirmpasswordUrl =
+      'https://refillpro.store/api/v1/password-reset/confirm/';
+  Future<Map<String, dynamic>?> confirmPassword(
+      String token, String new_password, String confirm_password) async {
     // Request for new password
     final response = await http.post(
       Uri.parse(confirmpasswordUrl),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': token, 'new_password': new_password, 'confirm_password': confirm_password}),
+      body: jsonEncode({
+        'token': token,
+        'new_password': new_password,
+        'confirm_password': confirm_password
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -124,6 +143,4 @@ class AuthService {
       return null;
     }
   }
-
-
 }

@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       imagePath: 'assets/Slim Container with Water.png',
                       title: 'Water Slim',
                       size: '5 Gallon',
-                      price: '35.00',
+                      price: '30.00',
                       onTap: () {
                         Navigator.push(
                           context,
@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       imagePath: 'assets/Round Container with Water.png',
                       title: 'Water Round',
                       size: '5 Gallon',
-                      price: '35.00',
+                      price: '30.00',
                       onTap: () {
                         Navigator.push(
                           context,

@@ -152,6 +152,7 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Future<void> _saveProfile() async {
+    // Check if all required fields are filled
     if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -176,12 +177,18 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
+    // Retrieve access token
     String? accessToken = await _secureStorage.read(key: 'access_token');
     if (accessToken == null) {
       print("No access token found");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("No access token found. Please log in again.")),
+      );
       return;
     }
 
+    // Retrieve FCM token
     String? fcmToken = await _secureStorage.read(key: 'fcm_token');
     if (fcmToken == null) {
       print("No FCM token found");
@@ -189,6 +196,7 @@ class _EditProfileState extends State<EditProfile> {
       print("FCM token found: $fcmToken");
     }
 
+    // Prepare updated data
     final updatedData = {
       "first_name": _firstNameController.text,
       "last_name": _lastNameController.text,
@@ -200,20 +208,33 @@ class _EditProfileState extends State<EditProfile> {
       "firebase_tokens": fcmToken,
     };
 
-    final response = await _authService.editUser(accessToken, updatedData);
-    if (response != null) {
-      setState(() {
-        _isEditing = false;
-      });
-      await _secureStorage.write(
-          key: 'user_data', value: jsonEncode(updatedData));
+    try {
+      // Call API to update user data
+      final response = await _authService.editUser(accessToken, updatedData);
+      if (response != null) {
+        // Update UI state
+        setState(() {
+          _isEditing = false;
+        });
 
-      print('Profile updated successfully');
-      print('Updated user data: $updatedData');
-      print('Profile updated successfully');
-      Navigator.pop(context, true);
-    } else {
-      print('Failed to update profile');
+        // Save updated data to secure storage
+        await _secureStorage.write(
+            key: 'user_data', value: jsonEncode(updatedData));
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profile updated successfully!")),
+        );
+
+        print('Profile updated successfully');
+        print('Updated user data: $updatedData');
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+      print('Failed to update profile: $e');
     }
   }
 
@@ -472,8 +493,8 @@ class _EditProfileState extends State<EditProfile> {
                 ),
                 if (_isEditing)
                   Positioned(
-                    bottom: 10,
-                    left: 10,
+                    bottom: 50,
+                    left: 5,
                     child: FloatingActionButton(
                       onPressed: _MapIsLoading ? null : _getCurrentLocation,
                       backgroundColor: Colors.blue,
@@ -507,13 +528,13 @@ class _EditProfileState extends State<EditProfile> {
               ),
             ),
             onChanged: (value) {
-              if (value.trim().isNotEmpty) {
-                _getPlacePredictions(value);
-              } else {
-                setState(() {
+              setState(() {
+                if (value.trim().isNotEmpty) {
+                  _getPlacePredictions(value);
+                } else {
                   _predictions.clear();
-                });
-              }
+                }
+              });
             },
           ),
           const SizedBox(height: 8),

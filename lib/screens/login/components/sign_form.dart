@@ -32,7 +32,7 @@ class _SignFormState extends State<SignForm> {
   void _startLockTimer() {
     setState(() {
       _isLocked = true;
-      _lockTime = 10; 
+      _lockTime = 60; 
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -176,7 +176,7 @@ class _SignFormState extends State<SignForm> {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                "Locked for $_lockTime seconds",
+                "Try Again in $_lockTime seconds",
                 style: const TextStyle(color: Colors.red),
               ),
             ),

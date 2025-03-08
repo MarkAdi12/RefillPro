@@ -187,17 +187,28 @@ class _SignUpFormState extends State<SignUpForm> {
             labelText: "Password",
             hintText: "Enter your password",
             obscureText: true,
-            validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter a password' : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a password';
+              } else if (value.length < 8) {
+                return 'Password must be at least 8 characters long';
+              }
+              return null;
+            },
           ),
           _buildTextField(
             controller: _confirmPasswordController,
             labelText: "Confirm Password",
             hintText: "Re-enter your password",
             obscureText: true,
-            validator: (value) => value != _passwordController.text
-                ? 'Passwords do not match'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please confirm your password';
+              } else if (value != _passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
           ),
           _buildTextField(
             controller: _emailController,
@@ -235,8 +246,14 @@ class _SignUpFormState extends State<SignUpForm> {
             labelText: "Phone Number",
             hintText: "Enter your phone number",
             keyboardType: TextInputType.phone,
-            validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter a phone number' : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a phone number';
+              } else if (!RegExp(r'^\d{11}$').hasMatch(value)) {
+                return 'Phone number must be exactly 11 digits';
+              }
+              return null;
+            },
           ),
           SizedBox(height: 10),
           TextFormField(
@@ -257,14 +274,20 @@ class _SignUpFormState extends State<SignUpForm> {
                 },
               ),
             ),
-            validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter your address' : null,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your address';
+              }
+              return null;
+            },
             onChanged: (value) {
-              setState(() {}); // Triggers UI update to show/hide error text
+              setState(() {});
               if (value.trim().isNotEmpty) {
                 _getPlacePredictions(value);
               } else {
-                _predictions.clear();
+                setState(() {
+                  _predictions.clear();
+                });
               }
             },
           ),
@@ -337,8 +360,8 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
               ),
               Positioned(
-                bottom: 60,
-                left: 10,
+                bottom: 50,
+                left: 5,
                 child: FloatingActionButton(
                   onPressed: _getCurrentLocation,
                   backgroundColor: Colors.blue,
@@ -373,7 +396,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   );
                   if (response['error'] != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(response['error'])),
+                      SnackBar(content: Center(child: Text(response['error']))),
                     );
                   } else {
                     Navigator.pushReplacement(

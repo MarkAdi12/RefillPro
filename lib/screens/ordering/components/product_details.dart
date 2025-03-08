@@ -198,10 +198,47 @@ class _ProductDetailsState extends State<ProductDetails> {
                       margin: const EdgeInsets.all(16),
                       child: ElevatedButton(
                         onPressed: () {
-                          for (int i = 0; i < quantity; i++) {
-                            cartController.addToCart(widget.product);
+                          int maxLimit = (widget.product['name']
+                                  .toLowerCase()
+                                  .contains('water bottle'))
+                              ? 100
+                              : 20;
+
+                          // Find the current quantity of this item in the cart
+                          int currentCartQuantity = 0;
+                          final existingIndex = cartController.cartItems
+                              .indexWhere(
+                                  (item) => item['id'] == widget.product['id']);
+                          if (existingIndex != -1) {
+                            currentCartQuantity = cartController
+                                .cartItems[existingIndex]['quantity'];
                           }
-                          _showAddToCartDialog(context);
+                          int newTotalQuantity = currentCartQuantity + quantity;
+                          if (newTotalQuantity > maxLimit) {
+                            int allowedQuantity =
+                                maxLimit - currentCartQuantity;
+                            if (allowedQuantity > 0) {
+                              for (int i = 0; i < allowedQuantity; i++) {
+                                cartController.addToCart(widget.product);
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Limit reached! Added only $allowedQuantity items.')),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Cannot add more! Max limit of $maxLimit reached.')),
+                              );
+                            }
+                          } else {
+                            for (int i = 0; i < quantity; i++) {
+                              cartController.addToCart(widget.product);
+                            }
+                            _showAddToCartDialog(context);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,

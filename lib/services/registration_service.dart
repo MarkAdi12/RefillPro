@@ -5,7 +5,7 @@ class RegistrationService {
   static const String _baseUrl = "https://refillpro.store/api/v1/register/";
 
   // Method to register a new user
-  Future<Map<String, dynamic>> registerUser ({
+  Future<Map<String, dynamic>> registerUser({
     required String username,
     required String password,
     required String confirmpassword,
@@ -48,13 +48,29 @@ class RegistrationService {
         final responseData = json.decode(response.body);
         if (responseData['message'] == 'User registered successfully!') {
           print('Registration successful');
-          return responseData; 
+          return responseData;
         } else {
           return {'error': responseData['message'] ?? 'Unexpected response'};
         }
       } else {
         final responseData = json.decode(response.body);
-        return {'error': responseData['message'] ?? 'Registration failed'};
+        // Check for email errors
+        if (responseData['email'] != null && responseData['email'].isNotEmpty) {
+          return {
+            'error': responseData['email'][0]
+          }; // Return the first email error
+        }
+        // Check for username errors
+        else if (responseData['username'] != null &&
+            responseData['username'].isNotEmpty) {
+          return {
+            'error': responseData['username'][0]
+          }; // Return the first username error
+        }
+        // Fallback to a generic error message
+        else {
+          return {'error': responseData['message'] ?? 'Registration failed'};
+        }
       }
     } catch (e) {
       print("Error: $e");

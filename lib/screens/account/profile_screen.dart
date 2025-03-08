@@ -1,5 +1,4 @@
 import 'package:customer_frontend/screens/account/components/edit_password.dart';
-import 'package:customer_frontend/screens/account/components/edit_profile.dart';
 import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,19 +16,18 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final AuthService _authService = AuthService();
-  bool _isLoggingOut = false; 
+  bool _isLoggingOut = false;
+
   Future<void> _logout() async {
     setState(() {
       _isLoggingOut = true;
     });
-
 
     String? token = await _secureStorage.read(key: 'access_token');
 
     if (token != null) {
       final response = await _authService.logout(token);
 
-      // ignore: unnecessary_null_comparison
       if (response != null) {
         print('✅ Logout successful');
 
@@ -104,16 +102,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               press: () {},
             ),
             ProfileMenu(
-              text: "Help Center",
-              icon: Icons.help,
-              press: () {},
-            ),
-            ProfileMenu(
               text: _isLoggingOut ? "Logging Out..." : "Log Out",
               icon: Icons.logout_rounded,
-              press: _isLoggingOut
-                  ? null 
-                  : () => _logout(),
+              press: _isLoggingOut ? null : () => _logout(),
             ),
           ],
         ),

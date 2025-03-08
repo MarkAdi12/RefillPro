@@ -30,7 +30,7 @@ class SignInScreen extends StatelessWidget {
                     ),
                   ),
                   const Text(
-                    "Sign in with your mobile number \nand password",
+                    "Sign in with your Username \nand Password",
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),

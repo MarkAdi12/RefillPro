@@ -24,10 +24,10 @@ class PaymentController extends GetxController {
       try {
         if (await selectedFile.value!.exists()) {
           await selectedFile.value!.delete(); 
-          print("🗑️ Proof file deleted successfully.");
+          print("Proof file deleted successfully.");
         }
       } catch (e) {
-        print("❌ Error deleting proof file: $e");
+        print("Error deleting proof file: $e");
       }
     }
     selectedFile.value = null; 
