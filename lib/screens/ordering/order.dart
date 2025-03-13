@@ -109,9 +109,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
     if (lowerCaseName.contains("water bottle")) {
       return "assets/Water Bottle.png";
-    } else if (lowerCaseName.contains("water slim")) {
+    } else if (lowerCaseName.contains("slim")) {
       return "assets/Slim Container with Water.png";
-    } else if (lowerCaseName.contains("water round")) {
+    } else if (lowerCaseName.contains("bilog")) {
       return "assets/Round Container with Water.png";
     }
 

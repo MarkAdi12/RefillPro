@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 
 class OrderHistoryWidgets {
   static Widget buildOrderDetail(String value) {
+    String truncatedValue =
+        value.length > 40 ? '${value.substring(0, 37)}...' : value;
     return Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
-          );
+      truncatedValue,
+      style: const TextStyle(
+        fontSize: 16,
+        color: Colors.white,
+      ),
+    );
   }
 
   static Widget buildOrderItems(List<dynamic> items) {
@@ -33,11 +35,14 @@ class OrderHistoryWidgets {
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
+            final truncatedName = item['name'].length > 30
+                ? "${item['name'].substring(0, 30)}..."
+                : item['name'];
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "${item['quantity']} x ${item['name']}",
+                  "${item['quantity']} x $truncatedName",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -73,10 +78,7 @@ class OrderHistoryWidgets {
             ),
             Text(
               "₱${subtotal.toStringAsFixed(2)}",
-              style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black
-                  ),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
           ],
         ),
@@ -85,28 +87,33 @@ class OrderHistoryWidgets {
   }
 
   void showCheckoutDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text("Reorder Successful!", style: TextStyle(fontSize: 18),),
-        content: const Text("Do you want to proceed to checkout?", style: TextStyle(fontSize: 16)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); 
-            },
-            child: const Text("No", style: TextStyle(fontSize: 18)),
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Reorder Successful!",
+            style: TextStyle(fontSize: 18),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => CheckoutScreen()));
-            },
-            child: const Text("Yes", style: TextStyle(fontSize: 18)),
-          ),
-        ],
-      );
-    },
-  );
-}
+          content: const Text("Do you want to proceed to checkout?",
+              style: TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("No", style: TextStyle(fontSize: 18)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => CheckoutScreen()));
+              },
+              child: const Text("Yes", style: TextStyle(fontSize: 18)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

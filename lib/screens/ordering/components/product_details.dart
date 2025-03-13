@@ -106,7 +106,7 @@ class _ProductDetailsState extends State<ProductDetails> {
               ),
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                    const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -125,7 +125,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                     Text(
                       widget.product['description'] ??
                           'No description available',
-                      style: const TextStyle(fontSize: 14, color: Colors.white),
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.white),
                       maxLines: 7,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -179,14 +180,14 @@ class _ProductDetailsState extends State<ProductDetails> {
                                             .contains('water bottle'))
                                         ? 100
                                         : 20;
-
+            
                                     if (quantity < limit) {
                                       quantity++;
                                     }
                                   });
                                 },
-                                icon:
-                                    const Icon(Icons.add, color: Colors.white),
+                                icon: const Icon(Icons.add,
+                                    color: Colors.white),
                               ),
                             ],
                           ),
@@ -203,17 +204,16 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   .contains('water bottle'))
                               ? 100
                               : 20;
-
-                          // Find the current quantity of this item in the cart
                           int currentCartQuantity = 0;
                           final existingIndex = cartController.cartItems
-                              .indexWhere(
-                                  (item) => item['id'] == widget.product['id']);
+                              .indexWhere((item) =>
+                                  item['id'] == widget.product['id']);
                           if (existingIndex != -1) {
                             currentCartQuantity = cartController
                                 .cartItems[existingIndex]['quantity'];
                           }
-                          int newTotalQuantity = currentCartQuantity + quantity;
+                          int newTotalQuantity =
+                              currentCartQuantity + quantity;
                           if (newTotalQuantity > maxLimit) {
                             int allowedQuantity =
                                 maxLimit - currentCartQuantity;
@@ -249,7 +249,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                         ),
                         child: const Text(
                           'Add to Cart',
-                          style: TextStyle(fontSize: 16, color: kPrimaryColor),
+                          style:
+                              TextStyle(fontSize: 16, color: kPrimaryColor),
                         ),
                       ),
                     ),

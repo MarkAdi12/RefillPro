@@ -60,9 +60,8 @@ class _SignFormState extends State<SignForm> {
   }
 
   void _login() async {
-    if (_isLocked) return; // Prevent login attempts if locked
+    if (_isLocked) return; 
 
-    // Validate form before attempting login
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -84,6 +83,7 @@ class _SignFormState extends State<SignForm> {
       });
 
       String accessToken = tokens['access'];
+      print("Access Token: $accessToken");
       await _secureStorage.write(key: 'access_token', value: accessToken);
 
       final userData = await _authService.getUser(accessToken);

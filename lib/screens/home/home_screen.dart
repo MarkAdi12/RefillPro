@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => OrderScreen(
-                              autoSelectProductName: 'Water Slim with Faucet',
+                              autoSelectProductName: 'Refill Water (Slim with Faucet 5 Gal.)',
                             ),
                           ),
                         );
@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(
                             builder: (context) => OrderScreen(
                               autoSelectProductName:
-                                  'Water Round (Bilog)', // auto select
+                                  'Refill Water (Bilog 5 Gal.)', 
                             ),
                           ),
                         );

@@ -71,7 +71,7 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;
     final double longitude = 120.95534;
-    final int radius = 3000;
+    final int radius = 8000;
 
     String baseUrl =
         "https://maps.googleapis.com/maps/api/place/autocomplete/json";

@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
 import '../../../services/location_service.dart';
 import '../../../services/order_list_service.dart';
 
@@ -42,7 +41,6 @@ class _EditProfileState extends State<EditProfile> {
   void initState() {
     super.initState();
     _fetchUserData();
-
     _addressFocusNode.addListener(() {
       if (!_addressFocusNode.hasFocus) {
         FocusScope.of(context).unfocus(); // Force unfocus to remove suggestions
@@ -265,7 +263,7 @@ class _EditProfileState extends State<EditProfile> {
   Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;
     final double longitude = 120.95534;
-    final int radius = 500;
+    final int radius = 5000;
 
     String baseUrl =
         "https://maps.googleapis.com/maps/api/place/autocomplete/json";
