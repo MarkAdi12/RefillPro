@@ -7,7 +7,6 @@ import 'package:customer_frontend/controller/cart_controller.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
-
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
@@ -49,47 +48,50 @@ class _CartScreenState extends State<CartScreen> {
                   fontWeight: FontWeight.bold,
                   fontSize: 15),
             ),
-            Text(
-              "${cartController.cartItems.length} item(s)",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.white),
+            GetBuilder<CartController>(
+              builder: (controller) => Text(
+                "${controller.cartItems.length} item(s)",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.white),
+              ),
             ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            if (cartController.cartItems.isEmpty)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "No items in cart",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+      body: GetBuilder<CartController>(
+        // Ensure UI updates when the cart changes
+        builder: (controller) {
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                if (controller.cartItems.isEmpty)
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "No items in cart",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  )
+                else
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.6),
+                    child: CartCard(),
                   ),
-                ),
-              )
-            else
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.6),
-                child: CartCard(),
-              ),
-            if (cartController.cartItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: GetBuilder<CartController>(
-                  builder: (controller) {
-                    return Column(
+                if (controller.cartItems.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -97,9 +99,15 @@ class _CartScreenState extends State<CartScreen> {
                             Spacer(),
                             GestureDetector(
                                 onTap: () {
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OrderScreen()));
+                                  Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => OrderScreen()));
                                 },
-                                child: Text('Add More?', style: TextStyle(fontSize: 16),))
+                                child: Text(
+                                  'Add More?',
+                                  style: TextStyle(fontSize: 16),
+                                ))
                           ],
                         ),
                         Divider(thickness: 1, color: Colors.grey[400]),
@@ -108,27 +116,12 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             Text(
                               'Subtotal',
-                              style: TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 18),
                             ),
                             Text(
                               '₱${calculateTotal()}',
                               style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Delivery Fee',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                            Text(
-                              '₱0.00',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -138,25 +131,30 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             Text(
                               'Total:',
-                              style: TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 18),
                             ),
                             Text(
                               '₱${calculateTotal()}',
                               style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       ],
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
-      bottomNavigationBar:
-          cartController.cartItems.isNotEmpty ? CheckoutCard() : null,
+      bottomNavigationBar: GetBuilder<CartController>(
+        builder: (controller) {
+          return controller.cartItems.isNotEmpty
+              ? CheckoutCard()
+              : SizedBox.shrink();
+        },
+      ),
     );
   }
 }

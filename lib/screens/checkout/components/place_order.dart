@@ -90,17 +90,16 @@ class PlaceOrderCard extends StatelessWidget {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text("Failed to retrieve order ID")),
+                          content: Center(child: Text("Failed To Place Order. Please try again."))),
                     );
                     return;
                   }
 
-                  // Write orderId to secure storage
+                  // write orderID key
                   await _secureStorage.write(
                       key: 'tracking_order_id', value: orderId.toString());
                   print('tracking_order_id written: $orderId');
 
-                  // Debug: Read back the value immediately
                   String? storedOrderId =
                       await _secureStorage.read(key: 'tracking_order_id');
                   print('tracking_order_id read after write: $storedOrderId');
@@ -109,6 +108,7 @@ class PlaceOrderCard extends StatelessWidget {
                   cartController.clearCart();
                   _updateOrderStatusInFirebase(orderId.toString(), 0);
 
+                  // if online payment
                   if (paymentController.selectedPaymentMethod.value ==
                       'Online Payment') {
                     Navigator.pushReplacement(

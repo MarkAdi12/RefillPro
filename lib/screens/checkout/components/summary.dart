@@ -41,7 +41,7 @@ class OrderSummary extends StatelessWidget {
                         Text(
                           '₱${totalPrice.toStringAsFixed(2)}',
                           style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -55,30 +55,20 @@ class OrderSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Subtotal', style: TextStyle(fontSize: 14)),
+              Text('Subtotal', style: TextStyle(fontSize: 16)),
               Text(
                 '₱${cartController.calculateTotal()}',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Delivery Fee', style: TextStyle(fontSize: 14)),
-              Text(
-                '0.00',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total', style: TextStyle(fontSize: 14)),
+              Text('Total', style: TextStyle(fontSize: 16)),
               Text(
                 '₱${cartController.calculateTotal()}',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),

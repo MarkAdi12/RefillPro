@@ -79,8 +79,10 @@ class CartCard extends StatelessWidget {
                                           children: [
                                             GestureDetector(
                                               onTap: () {
+                                    
                                                 cartController
                                                     .decreaseQuantity(index);
+                                               
                                               },
                                               child: Icon(
                                                 Icons.remove,

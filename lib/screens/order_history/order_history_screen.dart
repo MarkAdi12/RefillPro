@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../../services/order_list_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../constants.dart';
 import '../../controller/cart_controller.dart';
 import 'components/order_history_widget.dart';
@@ -27,7 +26,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _loadOrderHistory();
+    _fetchOrders();
   }
 
   String formatDateTime(dynamic dateTime) {
@@ -41,21 +40,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       debugPrint("Error parsing date: $e");
       return "Invalid date";
     }
-  }
-
-  Future<void> _loadOrderHistory() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? storedOrders = prefs.getString('order_history');
-
-    if (storedOrders != null) {
-      setState(() {
-        _orderHistory =
-            List<Map<String, dynamic>>.from(json.decode(storedOrders));
-        _isLoading = false;
-      });
-    }
-
-    _fetchOrders();
   }
 
   Future<void> _fetchOrders() async {
@@ -95,14 +79,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
         orders.add({
           'delivery_datetime': formatDateTime(order['delivery_datetime']),
-          'orderNo': order['id'].toString(), // Store as string
+          'orderNo': order['id'].toString(),
           'customerName': customerName,
           'address': customerData?['address'] ?? 'No address provided',
           'orderItems': orderItems,
         });
       }
 
- 
       orders.sort(
           (a, b) => int.parse(b['orderNo']).compareTo(int.parse(a['orderNo'])));
 
@@ -110,10 +93,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         _orderHistory = orders;
         _isLoading = false;
       });
-
-  
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('order_history', json.encode(orders));
     } catch (e) {
       debugPrint("Error loading orders: $e");
       setState(() {
@@ -192,7 +171,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   BoxShadow(
                                     color: Color.fromARGB(255, 122, 122, 122),
                                     blurRadius: 8,
-                                    offset: const Offset(0, 4),
+                                    offset: Offset(0, 4),
                                   ),
                                 ],
                               ),

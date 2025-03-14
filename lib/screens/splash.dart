@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _logoutUser() async {
     await _secureStorage.delete(key: 'access_token');
-    print("🔓 Access token deleted");
+    print("Access token deleted");
   }
 
   @override

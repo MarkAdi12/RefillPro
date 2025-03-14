@@ -33,7 +33,7 @@ class PlaceOrderService {
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        int orderId = responseData['id']; // Extract order ID from response
+        int orderId = responseData['id']; 
         print("✅ Order placed successfully! Order ID: $orderId");
         return orderId;
       } else {

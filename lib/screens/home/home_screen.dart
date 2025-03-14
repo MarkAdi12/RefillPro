@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'package:customer_frontend/screens/account/components/edit_profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/screens/cart/cart_screen.dart';
 import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:flutter/material.dart';
-
 import 'components/item_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -96,13 +96,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Delivering To',
+                    Text('Delivering To',
                         style: TextStyle(fontSize: 13, color: Colors.white)),
-                    Text(
-                      _address != null && _address!.length > 30
-                          ? '${_address!.substring(0, 30)}...'
-                          : _address ?? 'No address available',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfile()));
+                      },
+                      child: Text(
+                        _address != null && _address!.length > 30
+                            ? '${_address!.substring(0, 30)}...'
+                            : _address ?? 'No address available',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -163,7 +168,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               'View All',
                               style: TextStyle(
                                   fontSize: 17,
-                                  color: Color.fromARGB(255, 82, 107, 131)),
+                                  color: Color.fromARGB(255, 26, 43, 59),
+                                  fontWeight: FontWeight.w400,
+                                  ),
                             ),
                           ),
                         ],
