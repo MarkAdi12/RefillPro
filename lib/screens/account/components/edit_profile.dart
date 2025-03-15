@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:customer_frontend/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:http/http.dart' as http;
@@ -227,7 +228,10 @@ class _EditProfileState extends State<EditProfile> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Missing Information", style: TextStyle(fontSize: 18),),
+            title: const Text(
+              "Missing Information",
+              style: TextStyle(fontSize: 18),
+            ),
             content:
                 const Text("Please fill in all required fields before saving."),
             actions: <Widget>[
@@ -248,7 +252,10 @@ class _EditProfileState extends State<EditProfile> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Invalid Location", style: TextStyle(fontSize: 18),),
+            title: const Text(
+              "Invalid Location",
+              style: TextStyle(fontSize: 18),
+            ),
             content: const Text(
                 "Please select a valid location using the map pin or choose an address from the suggestions."),
             actions: <Widget>[
@@ -608,11 +615,29 @@ class _EditProfileState extends State<EditProfile> {
           if (_predictions.isNotEmpty)
             SizedBox(
               height: 150,
-              child: ListView.builder(
+              child: ListView.separated(
                 itemCount: _predictions.length,
+                separatorBuilder: (context, index) => Divider(
+                  color: Colors.grey.shade400,
+                  thickness: 0.9, // Keep same style
+                  indent: 8,
+                  endIndent: 8,
+                ),
                 itemBuilder: (context, index) {
                   return ListTile(
-                    title: Text(_predictions[index]["description"]),
+                    leading: Icon(
+                      Icons.location_on, 
+                      color: kPrimaryColor, 
+                      size: 18, 
+                    ),
+                    title: Text(
+                      _predictions[index]["description"],
+                      style:
+                          TextStyle(fontWeight: FontWeight.w400, fontSize: 15),
+                    ),
+                    dense: true,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                     onTap: () async {
                       final placeId = _predictions[index]["place_id"];
                       final latLng = await _getPlaceDetails(placeId);

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
+import '../../../constants.dart';
 import '../../../services/location_service.dart';
 import '../../../services/registration_service.dart';
 
@@ -56,7 +57,6 @@ class _SignUpFormState extends State<SignUpForm> {
           _predictions.clear();
         });
 
-        
         if (_mapController != null) {
           _mapController!.animateCamera(
             CameraUpdate.newLatLng(LatLng(storeLat, storeLng)),
@@ -93,7 +93,7 @@ class _SignUpFormState extends State<SignUpForm> {
     setState(() {});
   }
 
-    Future<void> _getPlacePredictions(String input) async {
+  Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;
     final double longitude = 120.95534;
     final int radius = 1000000;
@@ -202,7 +202,6 @@ class _SignUpFormState extends State<SignUpForm> {
   }
 
   @override
- 
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
@@ -348,40 +347,78 @@ class _SignUpFormState extends State<SignUpForm> {
               }
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           if (_predictions.isNotEmpty)
-            SizedBox(
-              height: 150,
-              child: ListView.builder(
-                itemCount: _predictions.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_predictions[index]["description"]),
-                    onTap: () async {
-                      final placeId = _predictions[index]["place_id"];
-                      final placeDetails = await getPlaceDetails(placeId);
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(10), // Rounded bottom-left corner
+                  bottomRight:
+                      Radius.circular(10), // Rounded bottom-right corner
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    spreadRadius: 2,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: 300,
+                child: ListView.separated(
+                  itemCount: _predictions.length,
+                  separatorBuilder: (context, index) => Divider(
+                    color: Colors.grey.shade400,
+                    thickness: 0.9, // Reduced thickness
+                    indent: 20, // Smaller indent
+                    endIndent: 20,
+                  ),
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: Icon(
+                        Icons.location_on,
+                        color: kPrimaryColor,
+                        size: 18,
+                      ),
+                      title: Text(
+                        _predictions[index]["description"],
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400, fontSize: 15),
+                      ),
+                      dense: true, // Makes the ListTile take up less space
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 0), // Adjusts padding
+                      onTap: () async {
+                        final placeId = _predictions[index]["place_id"];
+                        final placeDetails = await getPlaceDetails(placeId);
 
-                      if (placeDetails != null) {
-                        final lat = placeDetails["geometry"]["location"]["lat"];
-                        final lng = placeDetails["geometry"]["location"]["lng"];
+                        if (placeDetails != null) {
+                          final lat =
+                              placeDetails["geometry"]["location"]["lat"];
+                          final lng =
+                              placeDetails["geometry"]["location"]["lng"];
 
-                        setState(() {
-                          selectedLat = lat;
-                          selectedLng = lng;
-                          _addressController.text =
-                              _predictions[index]["description"];
-                          _predictions.clear();
-                        });
+                          setState(() {
+                            selectedLat = lat;
+                            selectedLng = lng;
+                            _addressController.text =
+                                _predictions[index]["description"];
+                            _predictions.clear();
+                          });
 
-                        if (_mapController != null) {
-                          _mapController!.animateCamera(
-                            CameraUpdate.newLatLng(LatLng(lat, lng)),
-                          );
+                          if (_mapController != null) {
+                            _mapController!.animateCamera(
+                              CameraUpdate.newLatLng(LatLng(lat, lng)),
+                            );
+                          }
                         }
-                      }
-                    },
-                  );
-                },
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           Stack(
@@ -473,8 +510,8 @@ class _SignUpFormState extends State<SignUpForm> {
                     lastName: _lastNameController.text,
                     phoneNumber: _phoneNumberController.text,
                     address: _addressController.text,
-                    lat: selectedLat!, 
-                    long: selectedLng!, 
+                    lat: selectedLat!,
+                    long: selectedLng!,
                   );
 
                   if (response['error'] != null) {
