@@ -25,8 +25,6 @@ class _OrderScreenState extends State<OrderScreen> {
   bool _isSelecting = false;
   String? _errorMessage;
 
-  static List<dynamic> _productList = [];
-
   @override
   void initState() {
     super.initState();
@@ -34,16 +32,10 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    if (_productList.isNotEmpty) {
-      setState(() {
-        _products = _productList;
-        _isLoading = false;
-      });
-      if (widget.autoSelectProductName != null) {
-        _autoSelectProduct(widget.autoSelectProductName!);
-      }
-      return;
-    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     String? token = await _secureStorage.read(key: 'access_token');
 
@@ -57,7 +49,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       List<dynamic> items = await _itemService.getItems(token);
-      _productList = items;
 
       setState(() {
         _products = items;

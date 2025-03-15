@@ -19,8 +19,51 @@ class ProductDetails extends StatefulWidget {
 
 class _ProductDetailsState extends State<ProductDetails> {
   int quantity = 1;
-
   final CartController cartController = Get.put(CartController());
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStockAndShowAlert();
+  }
+
+  void _checkStockAndShowAlert() {
+    int stock = widget.product['stock'] ?? 0; // Default to 0 if not provided
+    bool waterProduct = widget.product['water_product'] ??
+        false; // Default to false if not provided
+
+    if (stock == 0 && !waterProduct) {
+      // Show alert ONLY if NOT a water product
+      Future.delayed(Duration.zero, () {
+        _showOutOfStockAlert();
+      });
+    }
+  }
+
+  void _showOutOfStockAlert() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing without user action
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Out of Stock',
+            style: TextStyle(fontSize: 18),
+          ),
+          content: const Text('This product is currently unavailable.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pop(context); // Go back to the previous screen
+              },
+              child: const Text('OK', style: TextStyle(color: kPrimaryColor)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _showAddToCartDialog(BuildContext context) {
     showDialog(
@@ -69,9 +112,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Product Details'),
-      ),
+      appBar: AppBar(title: const Text('Product Details')),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,9 +120,8 @@ class _ProductDetailsState extends State<ProductDetails> {
             Center(
               child: Container(
                 height: 400,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(12)),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
@@ -125,8 +165,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                     Text(
                       widget.product['description'] ??
                           'No description available',
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.white),
+                      style: const TextStyle(fontSize: 14, color: Colors.white),
                       maxLines: 7,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -146,10 +185,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         const Spacer(),
                         Container(
                           decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2.0,
-                            ),
+                            border: Border.all(color: Colors.white, width: 2.0),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -162,10 +198,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     });
                                   }
                                 },
-                                icon: const Icon(
-                                  Icons.remove,
-                                  color: Colors.white,
-                                ),
+                                icon: const Icon(Icons.remove,
+                                    color: Colors.white),
                               ),
                               Text(
                                 '$quantity',
@@ -180,14 +214,14 @@ class _ProductDetailsState extends State<ProductDetails> {
                                             .contains('water bottle'))
                                         ? 100
                                         : 20;
-            
+
                                     if (quantity < limit) {
                                       quantity++;
                                     }
                                   });
                                 },
-                                icon: const Icon(Icons.add,
-                                    color: Colors.white),
+                                icon:
+                                    const Icon(Icons.add, color: Colors.white),
                               ),
                             ],
                           ),
@@ -206,14 +240,13 @@ class _ProductDetailsState extends State<ProductDetails> {
                               : 20;
                           int currentCartQuantity = 0;
                           final existingIndex = cartController.cartItems
-                              .indexWhere((item) =>
-                                  item['id'] == widget.product['id']);
+                              .indexWhere(
+                                  (item) => item['id'] == widget.product['id']);
                           if (existingIndex != -1) {
                             currentCartQuantity = cartController
                                 .cartItems[existingIndex]['quantity'];
                           }
-                          int newTotalQuantity =
-                              currentCartQuantity + quantity;
+                          int newTotalQuantity = currentCartQuantity + quantity;
                           if (newTotalQuantity > maxLimit) {
                             int allowedQuantity =
                                 maxLimit - currentCartQuantity;
@@ -249,8 +282,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         ),
                         child: const Text(
                           'Add to Cart',
-                          style:
-                              TextStyle(fontSize: 16, color: kPrimaryColor),
+                          style: TextStyle(fontSize: 16, color: kPrimaryColor),
                         ),
                       ),
                     ),

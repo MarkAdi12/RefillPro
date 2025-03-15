@@ -40,6 +40,31 @@ class _SignUpFormState extends State<SignUpForm> {
   double? selectedLat;
   double? selectedLng;
   bool _isEditing = true;
+  final double storeLat = 14.7168117;
+  final double storeLng = 120.95534;
+
+  @override
+  void initState() {
+    super.initState();
+    // Add a listener to the address controller
+    _addressController.addListener(() {
+      if (_addressController.text.isEmpty) {
+        // Clear latitude and longitude if the address is empty
+        setState(() {
+          selectedLat = null;
+          selectedLng = null;
+          _predictions.clear();
+        });
+
+        
+        if (_mapController != null) {
+          _mapController!.animateCamera(
+            CameraUpdate.newLatLng(LatLng(storeLat, storeLng)),
+          );
+        }
+      }
+    });
+  }
 
   Future<void> _getCurrentLocation() async {
     setState(() {});
@@ -68,10 +93,10 @@ class _SignUpFormState extends State<SignUpForm> {
     setState(() {});
   }
 
-  Future<void> _getPlacePredictions(String input) async {
+    Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;
     final double longitude = 120.95534;
-    final int radius = 8000;
+    final int radius = 1000000;
 
     String baseUrl =
         "https://maps.googleapis.com/maps/api/place/autocomplete/json";
@@ -177,6 +202,7 @@ class _SignUpFormState extends State<SignUpForm> {
   }
 
   @override
+ 
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
@@ -369,18 +395,29 @@ class _SignUpFormState extends State<SignUpForm> {
                       setState(() {
                         _mapController = controller;
                       });
+
+                      // Move the camera to the store's location if no customer location is set
+                      if (selectedLat == null || selectedLng == null) {
+                        _mapController!.animateCamera(
+                          CameraUpdate.newLatLng(LatLng(storeLat, storeLng)),
+                        );
+                      }
                     },
                     initialCameraPosition: CameraPosition(
-                      target: LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                      target: LatLng(
+                          storeLat, storeLng), // Default to store location
                       zoom: 14.0,
                     ),
                     markers: {
                       Marker(
-                          markerId: const MarkerId("customer_location"),
-                          position:
-                              LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
-                          onDragEnd: _onMarkerDragEnd,
-                          draggable: true),
+                        markerId: const MarkerId("customer_location"),
+                        position: LatLng(
+                          selectedLat ?? storeLat,
+                          selectedLng ?? storeLng,
+                        ),
+                        draggable: true,
+                        onDragEnd: _onMarkerDragEnd,
+                      ),
                     },
                     gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                       Factory<OneSequenceGestureRecognizer>(
@@ -412,7 +449,21 @@ class _SignUpFormState extends State<SignUpForm> {
                 } else {
                   print("FCM token found: $fcmToken");
                 }
+
+                // Validate form fields
                 if (_formKey.currentState?.validate() ?? false) {
+                  // Check if location is valid
+                  if (selectedLat == null || selectedLng == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            "Please select a valid location using the map or address suggestions."),
+                      ),
+                    );
+                    return; // Stop form submission
+                  }
+
+                  // Proceed with registration
                   final response = await _registrationService.registerUser(
                     username: _usernameController.text,
                     password: _passwordController.text,
@@ -422,9 +473,10 @@ class _SignUpFormState extends State<SignUpForm> {
                     lastName: _lastNameController.text,
                     phoneNumber: _phoneNumberController.text,
                     address: _addressController.text,
-                    lat: selectedLat ?? 0.0,
-                    long: selectedLng ?? 0.0,
+                    lat: selectedLat!, 
+                    long: selectedLng!, 
                   );
+
                   if (response['error'] != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Center(child: Text(response['error']))),

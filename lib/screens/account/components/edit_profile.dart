@@ -34,6 +34,8 @@ class _EditProfileState extends State<EditProfile> {
   final FocusNode _addressFocusNode = FocusNode();
   double? selectedLat;
   double? selectedLng;
+  final double storeLat = 14.7168117;
+  final double storeLng = 120.95534;
   GoogleMapController? _mapController;
   final String apiKey = "AIzaSyAy1hLcI4XMz-UV-JgZJswU5nXcQHcL6mk";
 
@@ -41,14 +43,59 @@ class _EditProfileState extends State<EditProfile> {
   void initState() {
     super.initState();
     _fetchUserData();
+
+    // Add a listener to the address controller
+    _addressController.addListener(() {
+      if (_addressController.text.isEmpty) {
+        // Clear latitude and longitude if the address is empty
+        setState(() {
+          selectedLat = null;
+          selectedLng = null;
+        });
+
+        // Move the camera to the store's location if the map is ready
+        if (_mapController != null) {
+          _mapController!.animateCamera(
+            CameraUpdate.newLatLng(LatLng(storeLat, storeLng)),
+          );
+        }
+      }
+    });
+
     _addressFocusNode.addListener(() {
       if (!_addressFocusNode.hasFocus) {
-        FocusScope.of(context).unfocus(); // Force unfocus to remove suggestions
-        setState(() {}); // Trigger UI refresh
+        FocusScope.of(context).unfocus();
+        setState(() {});
       }
     });
   }
 
+  // PREDICTIONS
+  Future<void> _getPlacePredictions(String input) async {
+    final double latitude = 14.7168117;
+    final double longitude = 120.95534;
+    final int radius = 1000000;
+
+    String baseUrl =
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json";
+
+    String request =
+        "$baseUrl?input=$input&key=$apiKey&location=$latitude,$longitude"
+        "&radius=$radius&strictbounds&types=geocode&components=country:PH";
+
+    final response = await http.get(Uri.parse(request));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _predictions = data["predictions"];
+      });
+    } else {
+      print("Failed to fetch places: ${response.statusCode}");
+    }
+  }
+
+  // GEO LOCATOR ADDRESS LAT LONG IDENTIFER
   Future<String?> getAddressFromLatLng(double lat, double lng) async {
     final String url =
         "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey";
@@ -67,6 +114,7 @@ class _EditProfileState extends State<EditProfile> {
     return null;
   }
 
+  // GEO LOCATOR CURRENT LOCATION
   Future<void> _getCurrentLocation() async {
     setState(() {
       _MapIsLoading = true;
@@ -96,6 +144,26 @@ class _EditProfileState extends State<EditProfile> {
     setState(() {
       _MapIsLoading = false;
     });
+  }
+
+  // PREDICTED LAT LONG IDENTIFER
+  Future<LatLng?> _getPlaceDetails(String placeId) async {
+    final String baseUrl =
+        "https://maps.googleapis.com/maps/api/place/details/json";
+    final String request = "$baseUrl?place_id=$placeId&key=$apiKey";
+
+    final response = await http.get(Uri.parse(request));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data["status"] == "OK") {
+        final location = data["result"]["geometry"]["location"];
+        return LatLng(location["lat"], location["lng"]);
+      }
+    } else {
+      print("Failed to fetch place details: ${response.statusCode}");
+    }
+    return null;
   }
 
   Future<void> _fetchUserData() async {
@@ -150,7 +218,6 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Future<void> _saveProfile() async {
-    // Check if all required fields are filled
     if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -160,9 +227,30 @@ class _EditProfileState extends State<EditProfile> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Missing Information"),
+            title: const Text("Missing Information", style: TextStyle(fontSize: 18),),
             content:
                 const Text("Please fill in all required fields before saving."),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    // Validate that the address has valid latitude and longitude
+    if (selectedLat == null || selectedLng == null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Invalid Location", style: TextStyle(fontSize: 18),),
+            content: const Text(
+                "Please select a valid location using the map pin or choose an address from the suggestions."),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -186,14 +274,6 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
-    // Retrieve FCM token
-    String? fcmToken = await _secureStorage.read(key: 'fcm_token');
-    if (fcmToken == null) {
-      print("No FCM token found");
-    } else {
-      print("FCM token found: $fcmToken");
-    }
-
     // Prepare updated data
     final updatedData = {
       "first_name": _firstNameController.text,
@@ -201,9 +281,9 @@ class _EditProfileState extends State<EditProfile> {
       "email": _emailController.text,
       "phone_number": _phoneNumberController.text,
       "address": _addressController.text,
-      "lat": selectedLat ?? userData?['lat'] ?? 0.0,
-      "long": selectedLng ?? userData?['long'] ?? 0.0,
-      "firebase_tokens": fcmToken,
+      "lat": selectedLat,
+      "long": selectedLng,
+      "firebase_tokens": await _secureStorage.read(key: 'fcm_token'),
     };
 
     try {
@@ -258,30 +338,6 @@ class _EditProfileState extends State<EditProfile> {
         );
       },
     );
-  }
-
-  Future<void> _getPlacePredictions(String input) async {
-    final double latitude = 14.7168117;
-    final double longitude = 120.95534;
-    final int radius = 5000;
-
-    String baseUrl =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json";
-
-    String request =
-        "$baseUrl?input=$input&key=$apiKey&location=$latitude,$longitude"
-        "&radius=$radius&strictbounds&types=geocode&components=country:PH";
-
-    final response = await http.get(Uri.parse(request));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        _predictions = data["predictions"];
-      });
-    } else {
-      print("Failed to fetch places: ${response.statusCode}");
-    }
   }
 
   @override
@@ -454,7 +510,8 @@ class _EditProfileState extends State<EditProfile> {
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
-          if (selectedLat != null && selectedLng != null)
+          if (selectedLat != null && selectedLng != null ||
+              storeLat != null && storeLng != null)
             Stack(
               children: [
                 GestureDetector(
@@ -466,16 +523,28 @@ class _EditProfileState extends State<EditProfile> {
                         setState(() {
                           _mapController = controller;
                         });
+
+                        // Move the camera to the store's location if no customer location is set
+                        if (selectedLat == null || selectedLng == null) {
+                          _mapController!.animateCamera(
+                            CameraUpdate.newLatLng(LatLng(storeLat, storeLng)),
+                          );
+                        }
                       },
                       initialCameraPosition: CameraPosition(
-                        target: LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                        target: LatLng(
+                          selectedLat ?? storeLat,
+                          selectedLng ?? storeLng,
+                        ),
                         zoom: 14.0,
                       ),
                       markers: {
                         Marker(
                           markerId: const MarkerId("customer_location"),
-                          position:
-                              LatLng(selectedLat ?? 0.0, selectedLng ?? 0.0),
+                          position: LatLng(
+                            selectedLat ?? storeLat,
+                            selectedLng ?? storeLng,
+                          ),
                           draggable: _isEditing,
                           onDragEnd: _onMarkerDragEnd,
                         ),
@@ -544,12 +613,23 @@ class _EditProfileState extends State<EditProfile> {
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text(_predictions[index]["description"]),
-                    onTap: () {
-                      _addressController.text =
-                          _predictions[index]["description"];
-                      setState(() {
-                        _predictions.clear();
-                      });
+                    onTap: () async {
+                      final placeId = _predictions[index]["place_id"];
+                      final latLng = await _getPlaceDetails(placeId);
+
+                      if (latLng != null) {
+                        _addressController.text =
+                            _predictions[index]["description"];
+                        setState(() {
+                          selectedLat = latLng.latitude;
+                          selectedLng = latLng.longitude;
+                          _predictions.clear();
+                          _mapController!.animateCamera(CameraUpdate.newLatLng(
+                              LatLng(selectedLat!, selectedLng!)));
+                        });
+                        print(
+                            "Selected Lat: ${selectedLat}, Lng: ${selectedLng}");
+                      }
                       FocusScope.of(context).unfocus();
                     },
                   );
