@@ -1,8 +1,11 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:customer_frontend/services/item_service.dart';
 
 class CartController extends GetxController {
   var cartItems = <Map<String, dynamic>>[].obs;
   var remarks = "".obs;
+  var isLoading = false.obs;
 
   void addToCart(Map<String, dynamic> product) {
     final index =
@@ -23,48 +26,67 @@ class CartController extends GetxController {
   }
 
   // Reorder items from order history
-  void reorder(List<Map<String, dynamic>> orderItems) {
+  Future<void> reorder(List<Map<String, dynamic>> orderItems) async {
+    isLoading.value = true; // Start loading
+
+    final ItemService itemService = ItemService();
+    String? token = await FlutterSecureStorage().read(key: 'access_token');
+
+    if (token == null) {
+      print("⚠️ No authentication token found.");
+      isLoading.value = false; // Stop loading
+      return;
+    }
+
+    List<dynamic> latestItems = await itemService.getItems(token);
+
     for (var item in orderItems) {
+      var latestItem = latestItems.firstWhere(
+        (product) => product['id'] == item['id'],
+        orElse: () => null,
+      );
+
+      if (latestItem == null) {
+        print("⚠️ Item ${item['name']} not found.");
+        continue;
+      }
+
+      double updatedPrice = double.parse(latestItem['price'].toString());
       final index =
           cartItems.indexWhere((cartItem) => cartItem['id'] == item['id']);
-
       int maxLimit = (item['name'] == "Water Bottle") ? 100 : 20;
-      int newQuantity = item['quantity']; // Quantity being added
+      int newQuantity = item['quantity'];
 
       if (index != -1) {
-        // Existing item: Check the total after adding
         int currentQuantity = cartItems[index]['quantity'];
         int updatedQuantity = currentQuantity + newQuantity;
 
         if (updatedQuantity > maxLimit) {
-          print(
-              "🚫 Cannot reorder ${item['name']}. Max limit of $maxLimit reached.");
-          cartItems[index]['quantity'] = maxLimit; // Set to limit
+          cartItems[index]['quantity'] = maxLimit;
         } else {
           cartItems[index]['quantity'] = updatedQuantity;
         }
 
-        // Update total price
+        cartItems[index]['price'] = updatedPrice;
         cartItems[index]['totalPrice'] =
-            cartItems[index]['price'] * cartItems[index]['quantity'];
+            updatedPrice * cartItems[index]['quantity'];
       } else {
-        // New item: Ensure it doesn't exceed the limit
         if (newQuantity > maxLimit) {
-          print(
-              "⚠️ Adjusting quantity of ${item['name']} to max limit $maxLimit.");
           newQuantity = maxLimit;
         }
 
         cartItems.add({
           'id': item['id'],
           'name': item['name'],
-          'price': item['price'],
+          'price': updatedPrice,
           'quantity': newQuantity,
-          'totalPrice': item['price'] * newQuantity,
+          'totalPrice': updatedPrice * newQuantity,
         });
       }
     }
-    printOrderedItems(); // Ensure updated cart prints correctly
+
+    printOrderedItems();
+    isLoading.value = false; // Stop loading
   }
 
   int getQuantity(int productId) {
@@ -126,8 +148,6 @@ class CartController extends GetxController {
 
       cartItems[index]['quantity'] += 1;
       update();
-
-     
     }
   }
 

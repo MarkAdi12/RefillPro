@@ -86,31 +86,48 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.location_on_rounded,
-                  color: Colors.white,
-                  size: 28,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => EditProfile()));
+                  },
+                  child: const Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Aligns text to the left
                   children: [
-                    Text('Delivering To',
-                        style: TextStyle(fontSize: 13, color: Colors.white)),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfile()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => EditProfile()),
+                        );
                       },
-                      child: Text(
-                        _address != null && _address!.length > 30
-                            ? '${_address!.substring(0, 30)}...'
-                            : _address ?? 'No address available',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivering To',
+                            style: TextStyle(fontSize: 13, color: Colors.white),
+                          ),
+                          Text(
+                            _address != null && _address!.length > 30
+                                ? '${_address!.substring(0, 30)}...'
+                                : _address ?? 'No address available',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
+                )
               ],
             ),
           ),
@@ -167,10 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: const Text(
                               'View All',
                               style: TextStyle(
-                                  fontSize: 17,
-                                  color: Color.fromARGB(255, 26, 43, 59),
-                                  fontWeight: FontWeight.w400,
-                                  ),
+                                fontSize: 17,
+                                color: Color.fromARGB(255, 26, 43, 59),
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                           ),
                         ],
@@ -186,7 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => OrderScreen(
-                              autoSelectProductName: 'Refill Water (Slim with Faucet 5 Gal.)',
+                              autoSelectProductName:
+                                  'Refill Water (Slim with Faucet 5 Gal.)',
                             ),
                           ),
                         );
@@ -204,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(
                             builder: (context) => OrderScreen(
                               autoSelectProductName:
-                                  'Refill Water (Bilog 5 Gal.)', 
+                                  'Refill Water (Bilog 5 Gal.)',
                             ),
                           ),
                         );

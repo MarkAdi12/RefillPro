@@ -1,7 +1,8 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:convert';
 import '../../../services/order_list_service.dart';
 import '../../constants.dart';
 import '../../controller/cart_controller.dart';
@@ -73,7 +74,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             'quantity': (item['quantity'] is int)
                 ? item['quantity']
                 : double.parse(item['quantity']).toInt(),
-            'price': double.parse(item['product']['price']),
+            'price': double.parse(item['total_price']) /
+                double.parse(item['quantity']),
           });
         }
 
@@ -203,20 +205,44 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   OrderHistoryWidgets.buildTotalSection(
                                       subtotal),
                                   const SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      OrderHistoryWidgets()
-                                          .showCheckoutDialog(context);
-                                      final CartController cartController =
-                                          Get.find<CartController>();
-                                      cartController
-                                          .reorder(order['orderItems']);
-                                    },
-                                    child: const Text(
-                                      'Reorder',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
+                                  Obx(() => ElevatedButton(
+                                        onPressed: Get.find<CartController>()
+                                                .isLoading
+                                                .value
+                                            ? null // Completely disables the button
+                                            : () async {
+                                                final CartController
+                                                    cartController =
+                                                    Get.find<CartController>();
+                                                cartController.isLoading.value =
+                                                    true;
+
+                                                await cartController.reorder(
+                                                    order['orderItems']);
+
+                                                cartController.isLoading.value =
+                                                    false; // Re-enable button
+
+                                                OrderHistoryWidgets()
+                                                    .showCheckoutDialog(
+                                                        context);
+                                              },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Get.find<
+                                                      CartController>()
+                                                  .isLoading
+                                                  .value
+                                              ? kPrimaryColor // Disabled color
+                                              : kPrimaryColor, // Normal color
+                                        ),
+                                        child: Text(
+                                          'Reorder',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      )),
                                 ],
                               ),
                             ),

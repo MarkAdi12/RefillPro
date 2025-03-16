@@ -16,7 +16,6 @@ class ViewProfile extends StatefulWidget {
 class _ViewProfileState extends State<ViewProfile> {
   final _secureStorage = const FlutterSecureStorage();
 
-
   String? name;
   String? address;
   String? phoneNumber;
@@ -47,18 +46,16 @@ class _ViewProfileState extends State<ViewProfile> {
         print("Email after setState: $email");
         userLocation = LatLng(lat, lng);
         isLoading = false;
-         print(userData);
+        print(userData);
       });
     } else {
       setState(() => isLoading = false);
-        print(userData);
+      print(userData);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-  
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -79,6 +76,16 @@ class _ViewProfileState extends State<ViewProfile> {
             child: const Text('Edit', style: TextStyle(color: Colors.white)),
           ),
         ],
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Colors.white,
+            size: 16,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

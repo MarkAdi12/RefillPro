@@ -18,7 +18,7 @@ class OrderSummary extends StatelessWidget {
             padding: const EdgeInsets.only(top: 12.0),
             child: Text(
               'Order Summary',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
             ),
           ),
           GetBuilder<CartController>(
@@ -41,7 +41,7 @@ class OrderSummary extends StatelessWidget {
                         Text(
                           '₱${totalPrice.toStringAsFixed(2)}',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 16, fontWeight: FontWeight.w400),
                         ),
                       ],
                     ),
@@ -55,20 +55,10 @@ class OrderSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Subtotal', style: TextStyle(fontSize: 16)),
+              Text('Total', style: TextStyle(fontSize: 18)),
               Text(
                 '₱${cartController.calculateTotal()}',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total', style: TextStyle(fontSize: 16)),
-              Text(
-                '₱${cartController.calculateTotal()}',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
               ),
             ],
           ),

@@ -71,6 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Account'),
+        
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
