@@ -33,9 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         await _secureStorage.delete(key: 'access_token');
         await _secureStorage.delete(key: 'refresh_token');
-
-        // Redirect to login screen
         if (mounted) {
+          _authService.cancelLogoutTimer();
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const SignInScreen()),
@@ -71,7 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Account'),
-        
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),

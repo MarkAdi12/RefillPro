@@ -5,7 +5,6 @@ import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:customer_frontend/services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'screens/splash.dart';
 import 'theme.dart'; 
 import 'package:get/get.dart';
 import 'package:customer_frontend/controller/cart_controller.dart';
@@ -25,7 +24,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false, 
       theme: AppTheme.lightTheme(context), 
-      home:  SplashScreen(), 
+      home: SignInScreen(),
     );
   }
 }

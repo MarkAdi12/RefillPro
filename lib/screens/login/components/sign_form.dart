@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/auth_service.dart';
@@ -29,6 +28,26 @@ class _SignFormState extends State<SignForm> {
   String? _errorMessage;
   int _lockTime = 0;
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoredToken();
+  }
+
+  Future<void> _loadStoredToken() async {
+    String? storedToken = await _secureStorage.read(key: 'access_token');
+    if (storedToken != null) {
+      print("🔹 Retrieved Stored Token: $storedToken");
+      final userData = await _authService.getUser(storedToken);
+      if (userData != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => InitScreen()),
+        );
+      }
+    }
+  }
 
   void _startLockTimer() {
     setState(() {
@@ -60,7 +79,7 @@ class _SignFormState extends State<SignForm> {
   }
 
   void _login() async {
-    if (_isLocked) return; 
+    if (_isLocked) return;
 
     if (!_formKey.currentState!.validate()) {
       return;
@@ -96,6 +115,8 @@ class _SignFormState extends State<SignForm> {
           final updatedData = {"firebase_tokens": fcmToken};
           await _authService.editUser(accessToken, updatedData);
         }
+
+        _authService.startLogoutTimer(accessToken, context);
 
         Navigator.pushReplacement(
           context,
@@ -137,7 +158,7 @@ class _SignFormState extends State<SignForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: _formKey, // Attach form key
+      key: _formKey,
       child: Column(
         children: [
           TextFormField(

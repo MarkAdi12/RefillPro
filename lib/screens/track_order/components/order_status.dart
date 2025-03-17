@@ -18,16 +18,22 @@ class OrderStatus extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildTimelineTile("Pending", Icons.hourglass_top, 0),
-            _buildTimelineTile("Preparing", Icons.kitchen, 1),
+            _buildTimelineTile(
+                status == 2 ? "Redelivering" : "Preparing",
+                Icons.kitchen,
+                1,
+                disableAfterLine: status == 2), // Disable afterLine when reattempting
             _buildTimelineTile("In Transit", Icons.directions_car, 3),
-            _buildTimelineTile("Completed", Icons.check_circle, 4, isLast: true),
+            _buildTimelineTile("Completed", Icons.check_circle, 4,
+                isLast: true),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTimelineTile(String label, IconData icon, int step, {bool isLast = false}) {
+  Widget _buildTimelineTile(String label, IconData icon, int step,
+      {bool isLast = false, bool disableAfterLine = false}) {
     return Expanded(
       child: TimelineTile(
         axis: TimelineAxis.horizontal,
@@ -39,7 +45,7 @@ class OrderStatus extends StatelessWidget {
           thickness: 2,
         ),
         afterLineStyle: LineStyle(
-          color: status > step ? kPrimaryColor : Colors.grey,
+          color: (disableAfterLine || status <= step) ? Colors.grey : kPrimaryColor,
           thickness: 2,
         ),
         indicatorStyle: IndicatorStyle(

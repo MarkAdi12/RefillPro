@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:customer_frontend/screens/track_order/components/order_status.dart';
 import 'package:flutter/material.dart';
@@ -34,45 +35,94 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   void initState() {
     super.initState();
     _fetchTrackingOrder();
-    _listenToLocationUpdates();
     _listenToOrderUpdates();
+    _listenToRiderLocationUpdates();
   }
 
   void _listenToOrderUpdates() {
-    DatabaseReference ordersRef = _database.ref('orders');
-    ordersRef.onChildChanged.listen((DatabaseEvent event) {
+    if (_trackingOrder == null || !_trackingOrder!.containsKey('orderNo')) {
+      print('⚠️ No tracking order found');
+      return;
+    }
+
+    DatabaseReference orderRef =
+        _database.ref('orders/${_trackingOrder!['orderNo']}');
+
+    orderRef.onChildChanged.listen((DatabaseEvent event) {
       DataSnapshot snapshot = event.snapshot;
-      if (snapshot.exists &&
-          snapshot.key != null &&
-          _trackingOrder != null &&
-          snapshot.key == _trackingOrder!['orderNo']) {
-        print('Order ${snapshot.key} updated in Firebase. Refreshing order...');
-        _fetchTrackingOrder();
+      if (snapshot.key == 'status' &&
+          snapshot.exists &&
+          snapshot.value != null) {
+        int newStatus = snapshot.value as int;
+
+        if (_trackingOrder!['status'] != newStatus) {
+          print('🚀 Order status changed to: $newStatus');
+          _trackingOrder!['status'] = newStatus;
+          _fetchTrackingOrder();
+        }
       }
+    }).onError((error) {
+      print('Error listening to order updates: $error');
     });
   }
 
-  void _listenToLocationUpdates() {
-    DatabaseReference locationRef = _database.ref('location');
-    locationRef.onValue.listen((DatabaseEvent event) {
+// ✅ Listen only for rider location updates
+  void _listenToRiderLocationUpdates() {
+    if (_trackingOrder == null || !_trackingOrder!.containsKey('orderNo')) {
+      print(
+          '⚠️ No tracking order found. Cannot listen for rider location updates.');
+      return;
+    }
+
+    String orderNo = _trackingOrder!['orderNo'];
+    print('🔍 Listening for rider location updates for Order ID: $orderNo');
+
+    DatabaseReference orderRef = _database.ref('orders/$orderNo');
+
+    orderRef.onValue.listen((DatabaseEvent event) {
       DataSnapshot snapshot = event.snapshot;
-      if (snapshot.exists && snapshot.value is Map) {
-        Map<dynamic, dynamic> locationData = snapshot.value as Map;
-        double lat = (locationData['lat'] as num).toDouble();
-        double long = (locationData['long'] as num).toDouble();
+
+      if (!snapshot.exists) {
+        print('❌ No data found for Order ID: $orderNo');
+        return;
+      }
+
+      if (snapshot.value is! Map) {
+        print('⚠️ Unexpected data format for Order ID: $orderNo');
+        return;
+      }
+
+      Map<dynamic, dynamic> orderData = snapshot.value as Map;
+
+      if (!orderData.containsKey('riderLat') ||
+          !orderData.containsKey('riderLong')) {
+        print('⚠️ Missing rider location data for Order ID: $orderNo');
+        return;
+      }
+
+      double newLat = (orderData['riderLat'] as num).toDouble();
+      double newLong = (orderData['riderLong'] as num).toDouble();
+
+      print(
+          '📍 Received new rider location for Order ID: $orderNo → Lat: $newLat, Long: $newLong');
+
+      // ✅ Only update if location actually changed
+      if (_riderLat != newLat || _riderLong != newLong) {
         setState(() {
-          _riderLat = lat;
-          _riderLong = long;
+          _riderLat = newLat;
+          _riderLong = newLong;
         });
-        print('Updated Location: $lat, $long');
+        print(
+            '✅ Rider Location Updated for Order ID: $orderNo → Lat: $_riderLat, Long: $_riderLong');
       } else {
-        print('No location data found in Firebase');
+        print('ℹ️ Rider location unchanged for Order ID: $orderNo');
       }
     });
   }
 
   Future<void> _fetchTrackingOrder() async {
     setState(() {
+      print('Tracking Order: $_trackingOrder');
       _isLoading = true;
     });
 
@@ -85,15 +135,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       return;
     }
 
-    // Debug: Print all keys in secure storage
-    final allKeys = await _secureStorage.readAll();
-    print('All keys in secure storage: $allKeys');
-
-    // Debug: Read tracking_order_id
     String? trackingOrderId =
         await _secureStorage.read(key: 'tracking_order_id');
-    print('tracking_order_id read in _fetchTrackingOrder: $trackingOrderId');
-
     if (trackingOrderId == null) {
       print('No tracking order ID found in secure storage');
       setState(() {
@@ -107,13 +150,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       final orders = await _orderListService.fetchOrders(token);
       final order = orders.firstWhere(
         (order) => order['id'].toString() == trackingOrderId,
-        orElse: () => null,
+        orElse: () => {},
       );
 
-      if (order == null) {
+      if (order.isEmpty) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Order not found.";
+          _errorMessage = "Failed to retrieve order.";
         });
         return;
       }
@@ -126,20 +169,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         }
       }
 
-      // Fetch customer details
       AuthService authService = AuthService();
       Map<String, dynamic>? customerData = await authService.getUser(token);
       String customerName = customerData != null
           ? "${customerData['first_name']} ${customerData['last_name']}"
           : "Unknown Customer";
 
-      //order items
       List<Map<String, dynamic>> orderItems = [];
-      double totalPrice = 0.0; // Initialize total price
+      double totalPrice = 0.0;
 
       for (var item in order['order_details']) {
         double itemTotalPrice = double.parse(item['total_price']);
-        totalPrice += itemTotalPrice; // Sum up total prices
+        totalPrice += itemTotalPrice;
 
         orderItems.add({
           'name': item['product']['name'] ?? "Unknown Product",
@@ -148,12 +189,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         });
       }
 
-      // Update fetched order
       setState(() {
+        // Ensure UI updates by setting a new map reference
         _trackingOrder = {
           'orderNo': order['id'].toString(),
           'customerName': customerName,
-          'status': order['status'].toString(),
+          'status':
+              order['status'].toString(), // Status will now trigger UI update
           'customerLat': double.parse(order['customer']['lat']),
           'customerLong': double.parse(order['customer']['long']),
           'orderItems': orderItems,
@@ -162,21 +204,26 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         _isLoading = false;
       });
 
+      print("✅ Tracking Order Updated: $_trackingOrder");
+
+      _listenToOrderUpdates(); // Add this line
+      print(
+          'Listening to Firebase path: orders/${_trackingOrder!['orderNo']}/status');
+      _listenToRiderLocationUpdates();
+
       if (order['status'] == 4) {
         _showOrderCompletedDialog(context);
       }
-      if (order['status'] == 5) {
+      if (order['status'] == 5 || order['status'] == 6) {
         _showOrderCancelledDialog(context);
         await clearOrderHistory();
-      }
-      if (order['status'] == 6) {
-        _showOrderCancelledDialog(context);
       }
     } catch (e) {
       debugPrint("Error loading order: $e");
       setState(() {
         _isLoading = false;
-        _errorMessage = "Failed to load tracking order.";
+        _errorMessage =
+            "Failed to load tracking order. Please check your internet connection and try again.";
       });
     }
   }
@@ -193,7 +240,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Order Cancelled", style: TextStyle(fontSize: 12)),
+          title: Text("Order Cancelled", style: TextStyle(fontSize: 18)),
           content: const Text("Your order has been cancelled. Thank you!"),
           actions: <Widget>[
             TextButton(
@@ -251,20 +298,55 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage ?? "No Active Orders"),
+                      Center(
+                          child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 8),
+                        child: Text(
+                          _errorMessage ?? "No Active Orders",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      )),
                       Container(
                         margin: const EdgeInsets.symmetric(
                             horizontal: 18, vertical: 8),
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(
+                                double.infinity, 50), // Ensures full width
+                            alignment: Alignment
+                                .center, // Centers text inside the button
+                          ),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OrderScreen(),
-                              ),
-                            );
+                            if (_errorMessage ==
+                                    "Failed to load tracking order. Please check your internet connection and try again." ||
+                                _errorMessage ==
+                                    "Failed to retrieve order. Please check your internet connection and try again.") {
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => InitScreen(
+                                            initialIndex: 1,
+                                          )));
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => OrderScreen(),
+                                ),
+                              );
+                            }
                           },
-                          child: Text('Place An Order'),
+                          child: Text(
+                            (_errorMessage ==
+                                        "Failed to load tracking order. Please check your internet connection and try again." ||
+                                    _errorMessage ==
+                                        "Failed to retrieve order. Please check your internet connection and try again.")
+                                ? "Refresh"
+                                : "Place An Order",
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ],
@@ -275,6 +357,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     children: [
                       int.parse(_trackingOrder!['status']) == 0 ||
                               int.parse(_trackingOrder!['status']) == 1
+                              ||
+                              int.parse(_trackingOrder!['status']) == 2
                           ? Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Image.asset("assets/prepairing.gif",

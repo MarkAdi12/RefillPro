@@ -36,6 +36,8 @@ class _OrderDetailsState extends State<OrderDetails> {
         return "Pending";
       case 1:
         return "Preparing";
+      case 2:
+        return "Redelivering";
       case 3:
         return "In Transit";
       case 4:

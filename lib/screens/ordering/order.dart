@@ -48,7 +48,16 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     try {
-      List<dynamic> items = await _itemService.getItems(token);
+      List<dynamic>? items = await _itemService.getItems(token);
+
+      if (items == null || items.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              "Failed to load products. Please\nCheck Your Internet Connection and try again.";
+        });
+        return;
+      }
 
       setState(() {
         _products = items;
@@ -61,7 +70,7 @@ class _OrderScreenState extends State<OrderScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = "Failed to load products.";
+        _errorMessage = "Failed to load products. Please try again.";
       });
     }
   }
@@ -116,12 +125,27 @@ class _OrderScreenState extends State<OrderScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _isSelecting
-              ? const Center(child: CircularProgressIndicator()) 
+              ? const Center(child: CircularProgressIndicator())
               : _errorMessage != null
-                  ? Center(
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 8),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _fetchProducts,
+                              child: const Text("Refresh"),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : _buildProductList(),
@@ -185,8 +209,10 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Image.asset(
                 getProductImage(product['name']),
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.image_not_supported,
+                    size: 50,
+                    color: Colors.grey),
               ),
             ),
           ),

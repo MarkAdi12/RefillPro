@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:customer_frontend/screens/checkout/components/order_success.dart';
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -56,7 +57,7 @@ class _PaymentFormState extends State<PaymentForm> {
 
     bool success = await PaymentService.submitPayment(
       orderId: widget.orderID,
-      amount: widget.amount, // Using widget.amount directly
+      amount: widget.amount, 
       proofFile: paymentController.selectedFile.value!,
       token: token,
       paymentMethod: '1',
@@ -80,46 +81,111 @@ class _PaymentFormState extends State<PaymentForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Upload Payment Proof"), automaticallyImplyLeading: false,),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Amount:",
-                    style: const TextStyle(
+    return WillPopScope(
+      onWillPop: () async {
+        bool exit = await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text(
+                  "Payment Failure Notice",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+                content: Text(
+                    "Failure to provide proof of payment will set the payment method to Cash on Delivery."),
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context).pop(false), // Stay on page
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => InitScreen(
+                                  initialIndex: 1,
+                                ))),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+        return exit;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Upload Payment Proof"),
+          automaticallyImplyLeading: false, // Disable default back button
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Amount:", style: TextStyle(fontSize: 16)),
+                  Text("₱${widget.amount}",
+                      style: const TextStyle(fontSize: 16)),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 10),
+              Obx(() => paymentController.selectedFile.value == null
+                  ? const Text("No file selected")
+                  : Text(
+                      "File: ${path.basename(paymentController.selectedFile.value!.path)}")),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: pickFile,
+                icon: const Icon(Icons.upload_file),
+                label: const Text("Upload Proof"),
+              ),
+              const SizedBox(height: 20),
+              Obx(() => ElevatedButton(
+                    onPressed: (paymentController.selectedFile.value == null)
+                        ? null
+                        : () async {
+                            await submitPayment();
+                          },
+                    child: const Text("Submit Payment"),
+                  )),
+              const SizedBox(height: 10),
+              Center(
+                child: Text(
+                  "If payment fails, the payment mode will\nbe set to Cash on Delivery.",
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: Container(
+                  height: 350, 
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey, // Light grey background
+                    borderRadius: BorderRadius.circular(12), // Rounded corners
+                  ),
+                  alignment: Alignment.center, // Centers the text inside
+                  child: const Text(
+                    "Gcash QR Place Holder",
+                    style: TextStyle(
                       fontSize: 16,
-                    )),
-                Text("₱${widget.amount}", style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-            Divider(),
-            const SizedBox(height: 10),
-            Obx(() => paymentController.selectedFile.value == null
-                ? const Text("No file selected")
-                : Text(
-                    "File: ${path.basename(paymentController.selectedFile.value!.path)}")),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: pickFile,
-              icon: const Icon(Icons.upload_file),
-              label: const Text("Upload Proof"),
-            ),
-            const SizedBox(height: 20),
-            Obx(() => ElevatedButton(
-                  onPressed: (paymentController.selectedFile.value == null)
-                      ? null
-                      : () async {
-                          await submitPayment();
-                        },
-                  child: const Text("Submit Payment"),
-                )),
-          ],
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54, // Slightly darker text
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
