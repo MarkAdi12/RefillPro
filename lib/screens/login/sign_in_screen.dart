@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'components/sign_form.dart';
 
-
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +20,19 @@ class SignInScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 40),
+     
+                  Container(
+                    height: 120,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      image: DecorationImage(
+                        image: AssetImage(
+                            'assets/login.jpg'), // Update the path to your logo
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10), // Space between logo and text
                   const Text(
                     "Welcome!",
                     style: TextStyle(

@@ -22,6 +22,7 @@ class PaymentForm extends StatefulWidget {
 class _PaymentFormState extends State<PaymentForm> {
   final PaymentController paymentController = Get.put(PaymentController());
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  bool isSubmitting = false; // Add this variable
 
   @override
   void initState() {
@@ -41,23 +42,35 @@ class _PaymentFormState extends State<PaymentForm> {
   }
 
   Future<void> submitPayment() async {
+    if (isSubmitting) return;
+
+    setState(() {
+      isSubmitting = true; // Disable the button
+    });
+
     String? token = await _secureStorage.read(key: 'access_token');
 
     if (token == null) {
       Get.snackbar("Error", "Authentication token not found.",
           backgroundColor: Colors.red, colorText: Colors.white);
+      setState(() {
+        isSubmitting = false;
+      });
       return;
     }
 
     if (paymentController.selectedFile.value == null) {
       Get.snackbar("Error", "Please upload proof of payment.",
           backgroundColor: Colors.red, colorText: Colors.white);
+      setState(() {
+        isSubmitting = false;
+      });
       return;
     }
 
     bool success = await PaymentService.submitPayment(
       orderId: widget.orderID,
-      amount: widget.amount, 
+      amount: widget.amount,
       proofFile: paymentController.selectedFile.value!,
       token: token,
       paymentMethod: '1',
@@ -77,6 +90,10 @@ class _PaymentFormState extends State<PaymentForm> {
       Get.snackbar("Error", "Failed to submit payment. Try again.",
           backgroundColor: Colors.red, colorText: Colors.white);
     }
+
+    setState(() {
+      isSubmitting = false; // Re-enable the button after submission
+    });
   }
 
   @override
@@ -118,7 +135,7 @@ class _PaymentFormState extends State<PaymentForm> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Upload Payment Proof"),
-          automaticallyImplyLeading: false, // Disable default back button
+          automaticallyImplyLeading: false,
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -148,12 +165,13 @@ class _PaymentFormState extends State<PaymentForm> {
               ),
               const SizedBox(height: 20),
               Obx(() => ElevatedButton(
-                    onPressed: (paymentController.selectedFile.value == null)
+                    onPressed: (paymentController.selectedFile.value == null ||
+                            isSubmitting)
                         ? null
-                        : () async {
-                            await submitPayment();
-                          },
-                    child: const Text("Submit Payment"),
+                        : submitPayment,
+                    child: isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Submit Payment"),
                   )),
               const SizedBox(height: 10),
               Center(
@@ -166,7 +184,7 @@ class _PaymentFormState extends State<PaymentForm> {
               const SizedBox(height: 40),
               Center(
                 child: Container(
-                  height: 350, 
+                  height: 350,
                   padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     color: Colors.grey, // Light grey background

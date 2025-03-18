@@ -166,8 +166,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             await _orderListService.retrievePayment(token, order['id']);
         if (paymentData != null) {
           _paymentData[order['id']] = paymentData;
+          print("Fetched Payment Data: $paymentData");
         }
       }
+
+      int orderId = int.parse(order['id'].toString());
+      int paymentId = _paymentData[orderId]?['id'] ?? -1;
 
       AuthService authService = AuthService();
       Map<String, dynamic>? customerData = await authService.getUser(token);
@@ -190,12 +194,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       }
 
       setState(() {
-        // Ensure UI updates by setting a new map reference
         _trackingOrder = {
           'orderNo': order['id'].toString(),
           'customerName': customerName,
-          'status':
-              order['status'].toString(), // Status will now trigger UI update
+          'status': order['status'].toString(), 
           'customerLat': double.parse(order['customer']['lat']),
           'customerLong': double.parse(order['customer']['long']),
           'orderItems': orderItems,
@@ -205,6 +207,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       });
 
       print("✅ Tracking Order Updated: $_trackingOrder");
+      print("Payment Mo Gago $_paymentData");
 
       _listenToOrderUpdates(); // Add this line
       print(
@@ -356,8 +359,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   child: Column(
                     children: [
                       int.parse(_trackingOrder!['status']) == 0 ||
-                              int.parse(_trackingOrder!['status']) == 1
-                              ||
+                              int.parse(_trackingOrder!['status']) == 1 ||
                               int.parse(_trackingOrder!['status']) == 2
                           ? Padding(
                               padding: const EdgeInsets.all(16.0),
@@ -382,6 +384,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         paymentStatus: _getPaymentStatus(
                             int.parse(_trackingOrder!['orderNo'])),
                         amount: _trackingOrder!['totalPrice'],
+                        paymentId:
+                            _paymentData[int.parse(_trackingOrder!['orderNo'])]
+                                ?['id'],
                       ),
                     ],
                   ),

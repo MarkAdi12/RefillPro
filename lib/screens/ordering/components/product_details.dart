@@ -112,25 +112,24 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Details')),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: AppBar(title: const Text('Product Details')),
+        body: Column(
           children: [
-            Center(
+            Expanded(
               child: Container(
-                height: 400,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
                     widget.imagePath,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey),
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
@@ -291,8 +290,6 @@ class _ProductDetailsState extends State<ProductDetails> {
               ),
             )
           ],
-        ),
-      ),
-    );
+        ));
   }
 }

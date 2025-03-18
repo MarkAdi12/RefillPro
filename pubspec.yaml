@@ -52,6 +52,7 @@ flutter:
     - assets/banner.png
     - assets/logo.jpg
     - assets/icon.png
+    - assets/login.jpg
 
 
 flutter_launcher_icons:

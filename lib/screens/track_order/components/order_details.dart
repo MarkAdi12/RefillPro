@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/order_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../services/payment_service.dart';
 import '../../checkout/components/payment_form.dart';
 
 class OrderDetails extends StatefulWidget {
@@ -12,17 +14,18 @@ class OrderDetails extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
   final String paymentStatus;
   final String amount;
+  final int? paymentId;
 
-  const OrderDetails({
-    super.key,
-    required this.currentStep,
-    required this.orderNo,
-    required this.customerName,
-    required this.status,
-    required this.orderItems,
-    required this.paymentStatus,
-    required this.amount,
-  });
+  const OrderDetails(
+      {super.key,
+      required this.currentStep,
+      required this.orderNo,
+      required this.customerName,
+      required this.status,
+      required this.orderItems,
+      required this.paymentStatus,
+      required this.amount,
+      this.paymentId});
 
   @override
   _OrderDetailsState createState() => _OrderDetailsState();
@@ -49,20 +52,53 @@ class _OrderDetailsState extends State<OrderDetails> {
 
   Future<void> _cancelOrder(BuildContext context, String accessToken,
       int orderId, String remarks) async {
+    print("🚀 Starting _cancelOrder for Order ID: $orderId...");
+
     final PlaceOrderService orderService = PlaceOrderService();
+    final PaymentService paymentService = PaymentService();
+
+    // Step 1: Cancel the order
+    print("🔄 Attempting to cancel the order...");
     final bool isCancelled =
         await orderService.cancelOrder(accessToken, orderId, remarks);
 
-    if (isCancelled) {
-      setState(() {
-        _isOrderCancelled = true;
-      });
-      _showOrderCancelledDialog(context);
-    } else {
+    if (!isCancelled) {
+      print("❌ Failed to cancel order ID $orderId.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to cancel order")),
       );
+      return;
     }
+
+    try {
+      bool isPaymentUpdated = await PaymentService.submitPayment(
+        orderId: orderId,
+        token: accessToken,
+        paymentMethod: "1", // Adjust if necessary
+        refCode: "CANSELD AHAH",
+        remarks: "Order cancellation - payment status updated to canceled",
+        status: "3", // Status 3 = Canceled
+        paymentId: widget.paymentId, // Using widget.paymentId as requested
+      );
+
+      if (isPaymentUpdated) {
+        print(
+            "✅ Payment ID ${widget.paymentId} successfully marked as canceled.");
+      } else {
+        print(
+            "❌ Failed to update payment status for Payment ID ${widget.paymentId}.");
+      }
+    } catch (e) {
+      print("🔥 Exception during payment update: $e");
+    }
+
+    // Step 4: Update UI state and show cancellation dialog
+    setState(() {
+      _isOrderCancelled = true;
+    });
+    _showOrderCancelledDialog(context);
+
+    print("🏁 _cancelOrder process completed for Order ID: $orderId.");
   }
 
   void _showOrderCancelledDialog(BuildContext context) {
@@ -148,9 +184,11 @@ class _OrderDetailsState extends State<OrderDetails> {
                 String finalReason = selectedReason == "Other"
                     ? otherReasonController.text.trim()
                     : selectedReason;
-                Navigator.of(context).pop(finalReason.isNotEmpty
-                    ? finalReason
-                    : "No reason provided");
+                if (finalReason.isNotEmpty) {
+                  Navigator.of(context).pop(finalReason);
+                } else {
+                  Navigator.of(context).pop("No reason provided");
+                }
               },
               child: const Text("Confirm"),
             ),
@@ -164,13 +202,23 @@ class _OrderDetailsState extends State<OrderDetails> {
           await const FlutterSecureStorage().read(key: 'access_token');
       if (accessToken != null) {
         await _cancelOrder(
-            context, accessToken, int.parse(widget.orderNo), confirmedReason);
+          context,
+          accessToken,
+          int.parse(widget.orderNo),
+          confirmedReason,
+        );
+
+        // Disable the button after order cancellation
+        setState(() {
+          _isOrderCancelled = true;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print("🔄 TANGINA: ${widget.paymentId}");
     return Container(
       margin: const EdgeInsets.all(12.0),
       padding: const EdgeInsets.all(16.0),
@@ -244,15 +292,18 @@ class _OrderDetailsState extends State<OrderDetails> {
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: widget.currentStep >= 1 || _isOrderCancelled
+              onPressed: (widget.currentStep >= 1 || _isOrderCancelled)
                   ? null
                   : () => _showCancelReasonDialog(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.currentStep >= 1 || _isOrderCancelled
+                backgroundColor: (widget.currentStep >= 1 || _isOrderCancelled)
                     ? Colors.grey
                     : Colors.red,
               ),
-              child: const Text('Cancel Order', style: TextStyle(fontSize: 16)),
+              child: const Text(
+                'Cancel Order',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ),
         ],
