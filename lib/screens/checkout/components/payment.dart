@@ -91,10 +91,11 @@ class _PaymentMethodCardState extends State<PaymentMethodCard> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  paymentController.selectedPaymentMethod.value ==
+                                  paymentController
+                                              .selectedPaymentMethod.value ==
                                           'Cash on Delivery'
                                       ? 'Pay when you receive the order'
-                                      : 'Pay online securely',
+                                      : 'Upload Proof of Payment',
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.grey[700]),
                                 ),

@@ -20,19 +20,19 @@ class SignInScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-     
-                  Container(
-                    height: 120,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      image: DecorationImage(
-                        image: AssetImage(
-                            'assets/login.jpg'), // Update the path to your logo
-                        fit: BoxFit.contain,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        image: const DecorationImage(
+                          image: AssetImage('assets/logo.jpg'),
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10), // Space between logo and text
+                  const SizedBox(height: 10),
                   const Text(
                     "Welcome!",
                     style: TextStyle(
@@ -44,6 +44,12 @@ class SignInScreen extends StatelessWidget {
                   const Text(
                     "Sign in with your Username \nand Password",
                     textAlign: TextAlign.center,
+                  ),
+                  const Text(
+                    "Operating Hours: 7:00 AM - 5:00 PM",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const SignForm(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../constants.dart';
 import '../../../controller/cart_controller.dart';
@@ -28,12 +29,11 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   void _checkStockAndShowAlert() {
-    int stock = widget.product['stock'] ?? 0; // Default to 0 if not provided
+    int stock = widget.product['stock'] ?? 0;
     bool waterProduct = widget.product['water_product'] ??
         false; // Default to false if not provided
 
     if (stock == 0 && !waterProduct) {
-      // Show alert ONLY if NOT a water product
       Future.delayed(Duration.zero, () {
         _showOutOfStockAlert();
       });
@@ -179,6 +179,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                               style: const TextStyle(
                                   fontSize: 18, color: Colors.white),
                             ),
+                            Text(
+                              'Available Stock: ${widget.product['stock']}',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.white),
+                            ),
                           ],
                         ),
                         const Spacer(),
@@ -200,25 +205,105 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 icon: const Icon(Icons.remove,
                                     color: Colors.white),
                               ),
-                              Text(
-                                '$quantity',
-                                style: const TextStyle(
-                                    fontSize: 16, color: Colors.white),
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      TextEditingController controller =
+                                          TextEditingController(
+                                              text: quantity.toString());
+
+                                      return AlertDialog(
+                                        title: const Text(
+                                          "Enter Quantity",
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                        content: TextField(
+                                          controller: controller,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            hintText: "Enter quantity",
+                                          ),
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly, // Only allows numbers
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              int enteredQuantity =
+                                                  int.tryParse(
+                                                          controller.text) ??
+                                                      quantity;
+                                              int defaultLimit = widget
+                                                      .product['name']
+                                                      .toLowerCase()
+                                                      .contains('water bottle')
+                                                  ? 100
+                                                  : 20;
+                                              int limit =
+                                                  (widget.product['stock'] <
+                                                          defaultLimit)
+                                                      ? widget.product['stock']
+                                                      : defaultLimit;
+
+                                              // Automatically set to the maximum if exceeded
+                                              if (enteredQuantity > limit) {
+                                                enteredQuantity = limit;
+                                              }
+
+                                              if (enteredQuantity >= 1) {
+                                                setState(() {
+                                                  quantity = enteredQuantity;
+                                                });
+                                              }
+
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text("OK"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
+                                            child: const Text("Cancel"),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Text(
+                                  '$quantity',
+                                  style: const TextStyle(
+                                      fontSize: 16, color: Colors.white),
+                                ),
                               ),
                               IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    int limit = (widget.product['name']
-                                            .toLowerCase()
-                                            .contains('water bottle'))
-                                        ? 100
-                                        : 20;
+                                onPressed: widget.product['stock'] > 0
+                                    ? () {
+                                        setState(() {
+                                          // Determine the default limit based on the product type
+                                          int defaultLimit = widget
+                                                  .product['name']
+                                                  .toLowerCase()
+                                                  .contains('water bottle')
+                                              ? 100
+                                              : 20;
 
-                                    if (quantity < limit) {
-                                      quantity++;
-                                    }
-                                  });
-                                },
+                                          // The limit should be the lesser of the actual stock or the default limit
+                                          int limit = (widget.product['stock'] <
+                                                  defaultLimit)
+                                              ? widget.product['stock']
+                                              : defaultLimit;
+
+                                          if (quantity < limit) {
+                                            quantity++;
+                                          }
+                                        });
+                                      }
+                                    : null,
                                 icon:
                                     const Icon(Icons.add, color: Colors.white),
                               ),

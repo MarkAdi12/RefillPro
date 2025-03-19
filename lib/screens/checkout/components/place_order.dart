@@ -65,10 +65,56 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
     );
   }
 
+  bool _isStoreOpen() {
+    final now =
+        DateTime.now().toUtc().add(const Duration(hours: 8)); // 24 / 7 Open
+    final openingTime = DateTime(now.year, now.month, now.day, 0, 0);
+    final closingTime = DateTime(now.year, now.month, now.day, 23, 59);
+    return now.isAfter(openingTime) &&
+        now.isBefore(closingTime.add(const Duration(minutes: 1)));
+    // Original Operating Hours
+    /*  final now = DateTime.now().toUtc().add(const Duration(hours: 8));
+    final openingTime = DateTime(now.year, now.month, now.day, 7, 0); // turn 7 disable operating hours 
+    final closingTime = DateTime(now.year, now.month, now.day, 17, 0); // turn to 17 ( 5pm)
+    return now.isAfter(openingTime) && now.isBefore(closingTime); */
+  }
+
+  void _showStoreClosedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Store Closed",
+            style: TextStyle(fontSize: 18),
+          ),
+          content: const Text(
+            "The store is currently closed. Operating hours are from 7 AM to 5 PM.",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => InitScreen()));
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _placeOrder(BuildContext context) async {
     setState(() {
-      _isProcessing = true; // Disable the button
+      _isProcessing = true;
     });
+
+    if (!_isStoreOpen()) {
+      _showStoreClosedDialog();
+      return;
+    }
 
     String? accessToken = await _secureStorage.read(key: 'access_token');
     if (accessToken == null) {
@@ -117,12 +163,15 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
       print('Tracking Order ID saved: $orderId');
 
       Navigator.pop(context); // Close the loading dialog
-      cartController.clearCart();
+
       _updateOrderStatusInFirebase(orderId.toString(), 0);
 
       // Navigate based on payment method
       String totalAmount = cartController.calculateTotal();
+
+      cartController.clearCart();
       if (paymentController.selectedPaymentMethod.value == 'Online Payment') {
+        print("amount mo boy $totalAmount");
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

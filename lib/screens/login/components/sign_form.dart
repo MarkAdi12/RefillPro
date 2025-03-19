@@ -19,7 +19,7 @@ class _SignFormState extends State<SignForm> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-  final _formKey = GlobalKey<FormState>(); // Added form key
+  final _formKey = GlobalKey<FormState>();
 
   bool _obscureText = true;
   bool _isLoading = false;
@@ -35,8 +35,52 @@ class _SignFormState extends State<SignForm> {
     _loadStoredToken();
   }
 
+  bool _isStoreOpen() {
+    final now = DateTime.now().toUtc().add(const Duration(hours: 8)); // 24 / 7 Open
+    final openingTime = DateTime(now.year, now.month, now.day, 0, 0); 
+    final closingTime = DateTime(now.year, now.month, now.day, 23, 59);
+    return now.isAfter(openingTime) && now.isBefore(closingTime.add(const Duration(minutes: 1)));
+    // Original Operating Hours
+    /*  final now = DateTime.now().toUtc().add(const Duration(hours: 8));
+    final openingTime = DateTime(now.year, now.month, now.day, 7, 0); // turn 7 disable operating hours 
+    final closingTime = DateTime(now.year, now.month, now.day, 14, 0); // turn to 17 ( 5pm)
+    return now.isAfter(openingTime) && now.isBefore(closingTime); */
+  }
+
+  void _showStoreClosedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Store Closed",
+            style: TextStyle(fontSize: 18),
+          ),
+          content: const Text(
+            "The store is currently closed. Operating hours are from 7 AM to 5 PM.",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _loadStoredToken() async {
     String? storedToken = await _secureStorage.read(key: 'access_token');
+
+    if (!_isStoreOpen()) {
+      _showStoreClosedDialog();
+      return;
+    }
+
     if (storedToken != null) {
       print("🔹 Retrieved Stored Token: $storedToken");
       final userData = await _authService.getUser(storedToken);
@@ -80,6 +124,11 @@ class _SignFormState extends State<SignForm> {
 
   void _login() async {
     if (_isLocked) return;
+
+    if (!_isStoreOpen()) {
+      _showStoreClosedDialog();
+      return;
+    }
 
     if (!_formKey.currentState!.validate()) {
       return;

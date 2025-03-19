@@ -25,34 +25,29 @@ class PaymentService {
         ..fields['ref_code'] = refCode
         ..fields['remarks'] = remarks;
 
-      // Conditionally add amount if it's not null
+      // Conditionally add optional fields
       if (amount != null) {
         request.fields['amount'] = amount;
       }
-
-      // Conditionally add status if it's not null
       if (status != null) {
         request.fields['status'] = status;
       }
-
-      // Conditionally add payment_id if it's not null
       if (paymentId != null) {
         request.fields['payment_id'] = paymentId.toString();
       }
 
       // Attach proof file if available
       if (proofFile != null && proofFile.path.isNotEmpty) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'proof',
-          proofFile.path,
-        ));
+        request.files
+            .add(await http.MultipartFile.fromPath('proof', proofFile.path));
       }
 
       var response = await request.send();
       String responseBody = await response.stream.bytesToString();
       print("📤 Response Body: $responseBody");
 
-      if (response.statusCode == 200) {
+      // Accept both 200 OK and 201 Created as successful
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print("✅ Payment submitted successfully!");
         return true;
       } else {

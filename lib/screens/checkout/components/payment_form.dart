@@ -12,7 +12,6 @@ import '../../../services/payment_service.dart';
 class PaymentForm extends StatefulWidget {
   final String amount;
   final int orderID; // Receive amount as a parameter
-
   const PaymentForm({super.key, required this.orderID, required this.amount});
 
   @override
@@ -82,22 +81,24 @@ class _PaymentFormState extends State<PaymentForm> {
       Get.snackbar("Success", "Payment submitted successfully.",
           backgroundColor: Colors.green, colorText: Colors.white);
       paymentController.clearPaymentData();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => OrderSuccessScreen()),
-      );
-    } else {
-      Get.snackbar("Error", "Failed to submit payment. Try again.",
-          backgroundColor: Colors.red, colorText: Colors.white);
     }
 
     setState(() {
       isSubmitting = false; // Re-enable the button after submission
     });
+
+// Only navigate if payment was successful
+    if (success) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OrderSuccessScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    print(widget.amount);
     return WillPopScope(
       onWillPop: () async {
         bool exit = await showDialog(
@@ -147,8 +148,9 @@ class _PaymentFormState extends State<PaymentForm> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Amount:", style: TextStyle(fontSize: 16)),
-                  Text("₱${widget.amount}",
-                      style: const TextStyle(fontSize: 16)),
+                  widget.amount.isNotEmpty
+                      ? Text("₱${widget.amount}")
+                      : const CircularProgressIndicator()
                 ],
               ),
               const Divider(),
