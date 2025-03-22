@@ -205,6 +205,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 icon: const Icon(Icons.remove,
                                     color: Colors.white),
                               ),
+                              SizedBox(width: 6),
                               GestureDetector(
                                 onTap: () {
                                   showDialog(
@@ -280,6 +281,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                       fontSize: 16, color: Colors.white),
                                 ),
                               ),
+                                SizedBox(width: 6,),
                               IconButton(
                                 onPressed: widget.product['stock'] > 0
                                     ? () {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../components/no_account_text.dart';
 import 'components/sign_form.dart';
 
 class SignInScreen extends StatelessWidget {
@@ -55,6 +56,7 @@ class SignInScreen extends StatelessWidget {
                   const SignForm(),
                   const SizedBox(height: 16),
                   const SizedBox(height: 20),
+                  const NoAccountText(),
                 ],
               ),
             ),

@@ -66,12 +66,10 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
   }
 
   bool _isStoreOpen() {
-    final now =
-        DateTime.now().toUtc().add(const Duration(hours: 8)); // 24 / 7 Open
+    final now = DateTime.now(); // No UTC conversion
     final openingTime = DateTime(now.year, now.month, now.day, 0, 0);
     final closingTime = DateTime(now.year, now.month, now.day, 23, 59);
-    return now.isAfter(openingTime) &&
-        now.isBefore(closingTime.add(const Duration(minutes: 1)));
+    return now.isAfter(openingTime) && now.isBefore(closingTime.add(const Duration(minutes: 1)));
     // Original Operating Hours
     /*  final now = DateTime.now().toUtc().add(const Duration(hours: 8));
     final openingTime = DateTime(now.year, now.month, now.day, 7, 0); // turn 7 disable operating hours 

@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Container(
-                        height: 200,
+                        width: double.infinity,                  
                         decoration: BoxDecoration(
                           color: Colors.white,
                         ),

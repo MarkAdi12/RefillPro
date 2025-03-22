@@ -294,15 +294,12 @@ class _EditProfileState extends State<EditProfile> {
     };
 
     try {
-      // Call API to update user data
       final response = await _authService.editUser(accessToken, updatedData);
       if (response != null) {
-        // Update UI state
         setState(() {
           _isEditing = false;
         });
 
-        // Save updated data to secure storage
         await _secureStorage.write(
             key: 'user_data', value: jsonEncode(updatedData));
 

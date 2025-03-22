@@ -36,10 +36,11 @@ class _SignFormState extends State<SignForm> {
   }
 
   bool _isStoreOpen() {
-    final now = DateTime.now().toUtc().add(const Duration(hours: 8)); // 24 / 7 Open
-    final openingTime = DateTime(now.year, now.month, now.day, 0, 0); 
+    final now = DateTime.now(); // No UTC conversion
+    final openingTime = DateTime(now.year, now.month, now.day, 0, 0);
     final closingTime = DateTime(now.year, now.month, now.day, 23, 59);
-    return now.isAfter(openingTime) && now.isBefore(closingTime.add(const Duration(minutes: 1)));
+    return now.isAfter(openingTime) &&
+        now.isBefore(closingTime.add(const Duration(minutes: 1)));
     // Original Operating Hours
     /*  final now = DateTime.now().toUtc().add(const Duration(hours: 8));
     final openingTime = DateTime(now.year, now.month, now.day, 7, 0); // turn 7 disable operating hours 
@@ -153,6 +154,7 @@ class _SignFormState extends State<SignForm> {
       String accessToken = tokens['access'];
       print("Access Token: $accessToken");
       await _secureStorage.write(key: 'access_token', value: accessToken);
+      await _secureStorage.write(key: 'user_password', value: _passwordController.text);
 
       final userData = await _authService.getUser(accessToken);
       if (userData != null) {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/item_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -5,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:customer_frontend/controller/cart_controller.dart';
 import 'package:customer_frontend/components/custom_appbar.dart';
 import 'components/product_details.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderScreen extends StatefulWidget {
   final String? autoSelectProductName;
@@ -59,10 +62,18 @@ class _OrderScreenState extends State<OrderScreen> {
         return;
       }
 
+      // Filter only active products (status = true)
+      List<dynamic> activeProducts =
+          items.where((item) => item['status'] == true).toList();
+
       setState(() {
-        _products = items;
+        _products = activeProducts;
         _isLoading = false;
       });
+
+      // Save the active products in SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('stored_products', json.encode(activeProducts));
 
       if (widget.autoSelectProductName != null) {
         _autoSelectProduct(widget.autoSelectProductName!);

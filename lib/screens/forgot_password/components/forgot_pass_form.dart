@@ -19,7 +19,6 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
 
   Future<void> _requestPasswordReset() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -27,7 +26,6 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
 
     final response =
         await _authService.requestPassword(emailController.text.trim());
-
     setState(() {
       isLoading = false;
       if (response != null) {
@@ -35,7 +33,7 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
           context,
           MaterialPageRoute(
               builder: (context) =>
-                  NewPasswordScreen()), 
+                  NewPasswordScreen(fromForgotPassword: true,)), 
         );
       } else {
         errorMessage = "No account found with this email.";

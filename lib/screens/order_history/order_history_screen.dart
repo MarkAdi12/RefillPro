@@ -209,7 +209,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                         onPressed: Get.find<CartController>()
                                                 .isLoading
                                                 .value
-                                            ? null // Completely disables the button
+                                            ? null
                                             : () async {
                                                 final CartController
                                                     cartController =
@@ -217,25 +217,33 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                                 cartController.isLoading.value =
                                                     true;
 
-                                                await cartController.reorder(
-                                                    order['orderItems']);
+                                                bool success =
+                                                    await cartController
+                                                        .reorder(order[
+                                                            'orderItems']);
 
                                                 cartController.isLoading.value =
-                                                    false; // Re-enable button
+                                                    false;
 
-                                                OrderHistoryWidgets()
-                                                    .showCheckoutDialog(
-                                                        context);
+                                                if (success) {
+                                                  OrderHistoryWidgets()
+                                                      .showCheckoutDialog(
+                                                          context);
+                                                } else {
+                                                  OrderHistoryWidgets()
+                                                      .showFailedDialog(
+                                                          context);
+                                                }
                                               },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Get.find<
-                                                      CartController>()
-                                                  .isLoading
-                                                  .value
-                                              ? kPrimaryColor // Disabled color
-                                              : kPrimaryColor, // Normal color
+                                          backgroundColor:
+                                              Get.find<CartController>()
+                                                      .isLoading
+                                                      .value
+                                                  ? kPrimaryColor
+                                                  : kPrimaryColor,
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           'Reorder',
                                           style: TextStyle(
                                             fontSize: 16,

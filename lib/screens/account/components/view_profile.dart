@@ -1,10 +1,15 @@
 import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/screens/account/components/edit_profile.dart';
+import 'package:customer_frontend/screens/forgot_password/new_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
+import 'package:customer_frontend/screens/login/sign_in_screen.dart';
+import 'package:customer_frontend/screens/init_screen.dart';
+import 'edit_password.dart';
+import 'profile_menu.dart';
 
 class ViewProfile extends StatefulWidget {
   const ViewProfile({super.key});
@@ -14,8 +19,9 @@ class ViewProfile extends StatefulWidget {
 }
 
 class _ViewProfileState extends State<ViewProfile> {
+  final AuthService _authService = AuthService();
   final _secureStorage = const FlutterSecureStorage();
-
+  bool _isLoggingOut = false;
   String? name;
   String? address;
   String? phoneNumber;
@@ -23,11 +29,58 @@ class _ViewProfileState extends State<ViewProfile> {
   String? email;
   bool isLoading = true;
   LatLng? userLocation;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
     _loadUserAddress();
+  }
+
+  Future<void> _logout() async {
+    setState(() {
+      _isLoggingOut = true;
+    });
+
+    String? token = await _secureStorage.read(key: 'access_token');
+
+    if (token != null) {
+      final response = await _authService.logout(token);
+
+      if (response != null) {
+        print('✅ Logout successful');
+
+        await _secureStorage.delete(key: 'access_token');
+        await _secureStorage.delete(key: 'refresh_token');
+        if (mounted) {
+          _authService.cancelLogoutTimer();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreen()),
+          );
+        }
+      } else {
+        print('❌ Logout failed');
+      }
+    } else {
+      print('⚠️ No token found, logging out locally');
+
+      // Clear storage to ensure full logout
+      await _secureStorage.delete(key: 'access_token');
+      await _secureStorage.delete(key: 'refresh_token');
+
+      // Redirect to login screen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SignInScreen()),
+        );
+      }
+    }
+
+    setState(() {
+      _isLoggingOut = false;
+    });
   }
 
   Future<void> _loadUserAddress() async {
@@ -59,39 +112,34 @@ class _ViewProfileState extends State<ViewProfile> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         elevation: 0,
         foregroundColor: Colors.white,
         title: const Text("Profile"),
         actions: [
           TextButton(
-            onPressed: () async {
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EditProfile()),
-              );
-              if (updated == true) {
-                _loadUserAddress();
-              }
-            },
+            onPressed: isLoading
+                ? null // Disable navigation while loading
+                : () async {
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EditProfile()),
+                    );
+                    if (updated == true) {
+                      _loadUserAddress();
+                    }
+                  },
             child: const Text('Edit', style: TextStyle(color: Colors.white)),
           ),
         ],
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.white,
-            size: 16,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(children: [
+      body: Stack(
+        children: [
+          // Main Content
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
                 const ProfilePic(),
                 Text(
                   name ?? "N/A",
@@ -101,8 +149,37 @@ class _ViewProfileState extends State<ViewProfile> {
                 Info(infoKey: "Email", info: email ?? "N/A"),
                 Info(infoKey: "Address", info: address ?? "N/A"),
                 Info(infoKey: "Mobile Number", info: phoneNumber ?? "N/A"),
-              ]),
+                ProfileMenu(
+                  text: "Change Password",
+                  icon: Icons.lock,
+                  press: isLoading
+                      ? null // Prevent pressing while loading
+                      : () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EditPassword()));
+                        },
+                ),
+                ProfileMenu(
+                  text: _isLoggingOut ? "Logging Out..." : "Log Out",
+                  icon: Icons.logout_rounded,
+                  press: _isLoggingOut ? null : () => _logout(),
+                ),
+              ],
             ),
+          ),
+          if (isLoading) ...[
+            ModalBarrier(
+              dismissible: false, // Prevent user interaction
+              color: Colors.black.withOpacity(0.3),
+            ),
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:customer_frontend/screens/checkout/checkout.dart';
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
 
 class OrderHistoryWidgets {
@@ -110,6 +111,32 @@ class OrderHistoryWidgets {
                     MaterialPageRoute(builder: (context) => CheckoutScreen()));
               },
               child: const Text("Yes", style: TextStyle(fontSize: 18)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showFailedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Reorder Failed!",
+            style: TextStyle(fontSize: 18),
+          ),
+          content: const Text(
+              "Your previous order can't be reordered due to item(s) being unavailable",
+              style: TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => InitScreen()));
+              },
+              child: const Text("OK", style: TextStyle(fontSize: 18)),
             ),
           ],
         );

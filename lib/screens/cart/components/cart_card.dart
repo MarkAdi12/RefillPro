@@ -1,12 +1,30 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:customer_frontend/constants.dart';
 import 'package:get/get.dart';
 import 'package:customer_frontend/controller/cart_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CartCard extends StatelessWidget {
   CartCard({super.key});
 
   final CartController cartController = Get.find();
+
+  Future<Map<String, dynamic>?> _getProductById(int productId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? storedProducts = prefs.getString('stored_products');
+
+    if (storedProducts != null) {
+      List<dynamic> products = json.decode(storedProducts);
+
+      return products.firstWhere(
+        (product) => product['id'] == productId,
+        orElse: () => null,
+      );
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,10 +97,8 @@ class CartCard extends StatelessWidget {
                                           children: [
                                             GestureDetector(
                                               onTap: () {
-                                    
                                                 cartController
                                                     .decreaseQuantity(index);
-                                               
                                               },
                                               child: Icon(
                                                 Icons.remove,
@@ -101,9 +117,42 @@ class CartCard extends StatelessWidget {
                                             ),
                                             SizedBox(width: 12),
                                             GestureDetector(
-                                              onTap: () {
-                                                cartController
-                                                    .increaseQuantity(index);
+                                              onTap: () async {
+                                                Map<String, dynamic>? product =
+                                                    await _getProductById(
+                                                  cartController
+                                                      .cartItems[index]['id'],
+                                                );
+                                                if (product != null &&
+                                                    product['stock'] > 0) {
+                                                  int defaultLimit = product[
+                                                              'name']
+                                                          .toLowerCase()
+                                                          .contains(
+                                                              'water bottle')
+                                                      ? 100
+                                                      : 20;
+                                                  int limit =
+                                                      (product['stock'] <
+                                                              defaultLimit)
+                                                          ? product['stock']
+                                                          : defaultLimit;
+
+                                                  if (cartController
+                                                              .cartItems[index]
+                                                          ['quantity'] <
+                                                      limit) {
+                                                    cartController
+                                                        .increaseQuantity(
+                                                            index);
+                                                  } else {
+                                                    print(
+                                                        "Cannot add more. Reached the limit of $limit.");
+                                                  }
+                                                } else {
+                                                  print(
+                                                      "Out of stock or product not found.");
+                                                }
                                               },
                                               child: Icon(
                                                 Icons.add,

@@ -1,6 +1,9 @@
 import 'package:customer_frontend/components/custom_appbar.dart';
 import 'package:customer_frontend/constants.dart';
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:customer_frontend/services/auth_service.dart';
 
 class EditPassword extends StatefulWidget {
   const EditPassword({super.key});
@@ -10,168 +13,238 @@ class EditPassword extends StatefulWidget {
 }
 
 class _EditPasswordState extends State<EditPassword> {
-  Map<String, bool> isExpanded = {
-    "Current Password": false,
-    "New Password": true,
-    "Confirm Password": true,
-  };
+  final AuthService _authService = AuthService();
+  final _secureStorage = FlutterSecureStorage();
+  final _formKey = GlobalKey<FormState>();
 
-  final Map<String, TextEditingController> controllers = {
-    "Current Password": TextEditingController(),
-    "New Password": TextEditingController(),
-    "Confirm Password": TextEditingController(),
-  };
+  bool isLoading = false;
+  String? errorMessage;
+  String? currentPasswordError;
+  bool _obscureCurrent = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  bool isLoading = false; // Tracks loading state
-  String? errorMessage; // Tracks error messages
+  String? currentPassword;
 
-  void toggleExpand(String title) {
+  final _currentPasswordController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentPassword();
+  }
+
+  Future<void> _getCurrentPassword() async {
+    String? storedPassword = await _secureStorage.read(key: 'user_password');
+
     setState(() {
-      isExpanded[title] = !(isExpanded[title] ?? false);
+      currentPassword = storedPassword;
     });
   }
 
-  Future<void> updatePassword() async {
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password';
+    } else if (value.length < 8) {
+      return 'Password must be at least 8 characters long';
+    } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Password must contain at least 1 capital letter';
+    } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Password must contain at least 1 number';
+    }
+    return null;
+  }
+
+  String? _validateCurrentPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your current password';
+    }
+    if (value != currentPassword) {
+      return 'Current password is incorrect';
+    }
+    return null;
+  }
+
+  Future<void> _updatePassword() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() {
-      isLoading = true;
-      errorMessage = null; 
+      isLoading = true; // Show loading indicator
+      errorMessage = null;
+      currentPasswordError = null;
     });
 
+    String? accessToken = await _secureStorage.read(key: 'access_token');
+
+    if (accessToken == null) {
+      setState(() {
+        errorMessage = "No access token found. Please log in again.";
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (_passwordController.text == _currentPasswordController.text) {
+      setState(() {
+        currentPasswordError =
+            "New password cannot be the same as the current password.";
+        isLoading = false;
+      });
+      return;
+    }
+
+    final updatedData = {
+      "password": _passwordController.text,
+      "confirm_password": _confirmController.text,
+    };
+
+    try {
+      final response = await _authService.editUser(accessToken, updatedData);
+      if (response != null) {
+        await _secureStorage.write(
+            key: 'user_password', value: _passwordController.text);
+
+        setState(() {
+          isLoading = false; // Hide loading indicator
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Password updated successfully!")),
+        );
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => InitScreen()));
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+        isLoading = false; // Hide loading indicator on error
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Edit Password'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (errorMessage != null) // Display error message
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Text(
-                  errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            _buildPasswordCard(
-              title: "Current Password",
-              controller: controllers["Current Password"]!,
-              isExpanded: isExpanded["Current Password"] ?? false,
-              onEdit: () => toggleExpand("Current Password"),
-            ),
-            const SizedBox(height: 16),
-            _buildPasswordCard(
-              title: "New Password",
-              controller: controllers["New Password"]!,
-              isExpanded: isExpanded["New Password"] ?? false,
-              onEdit: () => toggleExpand("New Password"),
-            ),
-            const SizedBox(height: 16),
-            _buildPasswordCard(
-              title: "Confirm Password",
-              controller: controllers["Confirm Password"]!,
-              isExpanded: isExpanded["Confirm Password"] ?? false,
-              onEdit: () => toggleExpand("Confirm Password"),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: isLoading ? null : updatePassword,
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Update Password"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPasswordCard({
-    required String title,
-    required TextEditingController controller,
-    required bool isExpanded,
-    VoidCallback? onEdit,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
                 children: [
-                  Text(
-                    title,
-                    style:  TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                  const Text("Edit Password", style: headingStyle),
+                  const Text(
+                    "Enter your current and new password to update.",
+                    textAlign: TextAlign.center,
                   ),
-                  if (title == "Current Password") // Masked sample text
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4.0),
+                  const SizedBox(height: 30),
+                  TextFormField(
+                    controller: _currentPasswordController,
+                    obscureText: _obscureCurrent,
+                    decoration: InputDecoration(
+                      labelText: "Current Password",
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureCurrent
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            _obscureCurrent = !_obscureCurrent;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: _validateCurrentPassword,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "New Password",
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _confirmController,
+                    obscureText: _obscureConfirm,
+                    decoration: InputDecoration(
+                      labelText: "Confirm Password",
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureConfirm
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirm = !_obscureConfirm;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your current password';
+                      }
+                      if (value != _passwordController.text) {
+                        return "Passwords do not match";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: isLoading ? null : _updatePassword,
+                    child: const Text("Change Password"),
+                  ),
+                  if (currentPasswordError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
                       child: Text(
-                        "••••••••••••••••",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                        currentPasswordError!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                 ],
               ),
-              IconButton(
-                onPressed: onEdit,
-                icon: Icon(
-                  isExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: kPrimaryColor,
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-          if (isExpanded) ...[
-            const SizedBox(height: 8.0),
-            TextField(
-              controller: controller,
-                decoration: InputDecoration(
-                labelText: "Enter $title",
-                labelStyle: const TextStyle(fontSize: 16, color: kPrimaryColor),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 28),
-              ),
-              style: const TextStyle(fontSize: 16),
-              obscureText: true, // Masks text for passwords
-              onSubmitted: (value) {
-                setState(() {});
-              },
             ),
-          ],
+          ),
+
+          // Loading overlay
+          if (isLoading)
+            Container(
+              color:
+                  Colors.black.withOpacity(0.5), // Semi-transparent background
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );

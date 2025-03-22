@@ -75,7 +75,7 @@ class _OrderDetailsState extends State<OrderDetails> {
         orderId: orderId,
         token: accessToken,
         paymentMethod: "1", // Adjust if necessary
-        refCode: "CANSELD AHAH",
+        refCode: "",
         remarks: "Order cancellation - payment status updated to canceled",
         status: "3", // Status 3 = Canceled
         paymentId: widget.paymentId, // Using widget.paymentId as requested
@@ -97,7 +97,6 @@ class _OrderDetailsState extends State<OrderDetails> {
       _isOrderCancelled = true;
     });
     _showOrderCancelledDialog(context);
-
     print("🏁 _cancelOrder process completed for Order ID: $orderId.");
   }
 

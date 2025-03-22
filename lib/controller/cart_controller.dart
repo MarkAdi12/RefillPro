@@ -26,7 +26,7 @@ class CartController extends GetxController {
   }
 
   // Reorder items from order history
-  Future<void> reorder(List<Map<String, dynamic>> orderItems) async {
+  Future<bool> reorder(List<Map<String, dynamic>> orderItems) async {
     isLoading.value = true; // Start loading
 
     final ItemService itemService = ItemService();
@@ -34,11 +34,12 @@ class CartController extends GetxController {
 
     if (token == null) {
       print("⚠️ No authentication token found.");
-      isLoading.value = false; // Stop loading
-      return;
+      isLoading.value = false;
+      return false; // Return false if no token
     }
 
     List<dynamic> latestItems = await itemService.getItems(token);
+    bool itemNotFound = false;
 
     for (var item in orderItems) {
       var latestItem = latestItems.firstWhere(
@@ -48,21 +49,27 @@ class CartController extends GetxController {
 
       if (latestItem == null) {
         print("⚠️ Item ${item['name']} not found.");
+        itemNotFound = true;
         continue;
       }
 
       double updatedPrice = double.parse(latestItem['price'].toString());
       final index =
           cartItems.indexWhere((cartItem) => cartItem['id'] == item['id']);
-      int maxLimit = (item['name'] == "Water Bottle") ? 100 : 20;
+      int maxLimit =
+          item['name'].toLowerCase().contains('water bottle') ? 100 : 20;
+      int stockLimit =
+          latestItem['stock'] ?? maxLimit; // Use stock as the limit
+      int limit = (stockLimit < maxLimit) ? stockLimit : maxLimit;
       int newQuantity = item['quantity'];
 
       if (index != -1) {
         int currentQuantity = cartItems[index]['quantity'];
         int updatedQuantity = currentQuantity + newQuantity;
 
-        if (updatedQuantity > maxLimit) {
-          cartItems[index]['quantity'] = maxLimit;
+        if (updatedQuantity > limit) {
+          cartItems[index]['quantity'] = limit;
+          print("⚠️ Reached the limit of $limit for ${item['name']}.");
         } else {
           cartItems[index]['quantity'] = updatedQuantity;
         }
@@ -71,8 +78,9 @@ class CartController extends GetxController {
         cartItems[index]['totalPrice'] =
             updatedPrice * cartItems[index]['quantity'];
       } else {
-        if (newQuantity > maxLimit) {
-          newQuantity = maxLimit;
+        if (newQuantity > limit) {
+          newQuantity = limit;
+          print("⚠️ Reached the limit of $limit for ${item['name']}.");
         }
 
         cartItems.add({
@@ -85,8 +93,8 @@ class CartController extends GetxController {
       }
     }
 
-    printOrderedItems();
-    isLoading.value = false; // Stop loading
+    isLoading.value = false;
+    return !itemNotFound; // Return false if any item was not found
   }
 
   int getQuantity(int productId) {
