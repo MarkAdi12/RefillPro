@@ -4,8 +4,10 @@ import 'package:customer_frontend/screens/login/sign_in_screen.dart';
 import 'package:customer_frontend/services/auth_service.dart';
 
 class NewPasswordScreen extends StatefulWidget {
+  final String email;
   final bool fromForgotPassword;
-  const NewPasswordScreen({super.key, required this.fromForgotPassword});
+  const NewPasswordScreen(
+      {super.key, required this.fromForgotPassword, required this.email});
 
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -17,8 +19,8 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  bool _obscureNewPassword = false;
-  bool _obscureConfirmPassword = false;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
   final AuthService _authService = AuthService();
   bool get fromForgotPassword => widget.fromForgotPassword;
   bool isLoading = false;
@@ -123,6 +125,33 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     });
   }
 
+  Future<void> _resendOTP() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await _authService.requestPassword(widget.email);
+      setState(() {
+        isLoading = false;
+        if (response != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("OTP resent successfully!")),
+          );
+        } else {
+          errorMessage = "No account found with this email.";
+        }
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = "An error occurred. Please try again.";
+      });
+      print("Error resending OTP: $e");
+    }
+  }
+
   @override
   void dispose() {
     tokenController.dispose();
@@ -223,15 +252,16 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
             style: TextStyle(color: Colors.grey[700]),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 8),
           GestureDetector(
-            onTap: () {}, // Function to resend OTP
-            child: Text(
-              "Resend",
-              style: TextStyle(
-                decoration: TextDecoration.underline,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            onTap: isLoading ? null : _resendOTP, // Disable tap while loading
+            child: isLoading
+                ? const CircularProgressIndicator() // Show loader
+                : const Text(
+                    "Resend",
+                    style: TextStyle(decoration: TextDecoration.underline),
+                    textAlign: TextAlign.center,
+                  ),
           ),
         ],
       ),

@@ -16,6 +16,7 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
   final AuthService _authService = AuthService();
   bool isLoading = false;
   String? errorMessage; // Store error message
+  String? email;
 
   Future<void> _requestPasswordReset() async {
     if (!_formKey.currentState!.validate()) return;
@@ -24,16 +25,18 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
       errorMessage = null;
     });
 
-    final response =
-        await _authService.requestPassword(emailController.text.trim());
+    final response = await _authService.requestPassword(emailController.text.trim());
     setState(() {
+      email = emailController.text.trim();
       isLoading = false;
       if (response != null) {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) =>
-                  NewPasswordScreen(fromForgotPassword: true,)), 
+              builder: (context) => NewPasswordScreen(
+                    fromForgotPassword: true,
+                    email: email!,
+                  )),
         );
       } else {
         errorMessage = "No account found with this email.";
@@ -73,7 +76,7 @@ class _ForgotPassFormState extends State<ForgotPassForm> {
               return null;
             },
           ),
-          if (errorMessage != null) 
+          if (errorMessage != null)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Center(
