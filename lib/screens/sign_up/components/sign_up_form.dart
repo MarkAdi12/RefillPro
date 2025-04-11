@@ -244,6 +244,24 @@ class _SignUpFormState extends State<SignUpForm> {
               _passwordKey.currentState?.validate();
             },
           ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Password must be at least 8 characters long",
+                  style: TextStyle(
+                      color: Colors.grey[600], fontStyle: FontStyle.italic),
+                ),
+                Text(
+                  "Password must contain at least 1 capital letter and 1 number",
+                  style: TextStyle(
+                      color: Colors.grey[600], fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+          ),
           _buildTextField(
             key:
                 _confirmPasswordKey, // Use the GlobalKey for the confirm password field

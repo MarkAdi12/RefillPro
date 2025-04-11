@@ -39,7 +39,7 @@ class OrderSummary extends StatelessWidget {
                           style: TextStyle(fontSize: 14),
                         ),
                         Text(
-                          '₱${totalPrice.toStringAsFixed(2)}',
+                          'PHP ${totalPrice.toStringAsFixed(2)}',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w400),
                         ),
@@ -57,7 +57,7 @@ class OrderSummary extends StatelessWidget {
             children: [
               Text('Total', style: TextStyle(fontSize: 18)),
               Text(
-                '₱${cartController.calculateTotal()}',
+                'PHP ${cartController.calculateTotal()}',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
               ),
             ],

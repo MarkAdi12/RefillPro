@@ -181,6 +181,27 @@ class _EditPasswordState extends State<EditPassword> {
                     ),
                     validator: _validatePassword,
                   ),
+                  const SizedBox(height: 5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Password must be at least 8 characters long",
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic),
+                        ),
+                        Text(
+                          "Password must contain at least 1 capital letter and 1 number",
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _confirmController,

@@ -5,6 +5,7 @@ import 'package:customer_frontend/services/order_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../services/payment_service.dart';
 import '../../checkout/components/payment_form.dart';
+import '../../checkout/components/resubmit_payment.dart';
 
 class OrderDetails extends StatefulWidget {
   final int currentStep;
@@ -217,7 +218,6 @@ class _OrderDetailsState extends State<OrderDetails> {
 
   @override
   Widget build(BuildContext context) {
-    print("🔄 TANGINA: ${widget.paymentId}");
     return Container(
       margin: const EdgeInsets.all(12.0),
       padding: const EdgeInsets.all(16.0),
@@ -267,8 +267,8 @@ class _OrderDetailsState extends State<OrderDetails> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => PaymentForm(
-                                orderID: int.parse(widget.orderNo),
+                          builder: (context) => ResubmitPayment(
+                                paymentId: widget.paymentId,
                                 amount: widget.amount,
                               )),
                     );
@@ -291,7 +291,7 @@ class _OrderDetailsState extends State<OrderDetails> {
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: (widget.currentStep >= 1 || _isOrderCancelled)
+              onPressed: (widget.currentStep >= 1 ||  _isOrderCancelled)
                   ? null
                   : () => _showCancelReasonDialog(context),
               style: ElevatedButton.styleFrom(

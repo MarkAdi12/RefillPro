@@ -23,9 +23,7 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final CartController cartController = Get.put(CartController());
   final PaymentController paymentController = Get.put(PaymentController());
-
   bool _isProcessing = false; // To control multiple clicks
-
   Future<bool> _hasPendingOrder(String accessToken) async {
     final orders = await OrderListService().fetchOrders(accessToken);
     return orders.any((order) => [0, 1, 2, 3].contains(order['status']));
@@ -69,7 +67,8 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
     final now = DateTime.now(); // No UTC conversion
     final openingTime = DateTime(now.year, now.month, now.day, 0, 0);
     final closingTime = DateTime(now.year, now.month, now.day, 23, 59);
-    return now.isAfter(openingTime) && now.isBefore(closingTime.add(const Duration(minutes: 1)));
+    return now.isAfter(openingTime) &&
+        now.isBefore(closingTime.add(const Duration(minutes: 1)));
     // Original Operating Hours
     /*  final now = DateTime.now().toUtc().add(const Duration(hours: 8));
     final openingTime = DateTime(now.year, now.month, now.day, 7, 0); // turn 7 disable operating hours 
@@ -111,6 +110,9 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
 
     if (!_isStoreOpen()) {
       _showStoreClosedDialog();
+      setState(() {
+        _isProcessing = false;
+      });
       return;
     }
 
@@ -132,6 +134,26 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
       return;
     }
 
+    String totalAmount = cartController.calculateTotal();
+
+    // 👉 If payment method is "Online Payment", go to payment form FIRST before placing order
+    if (paymentController.selectedPaymentMethod.value == 'Online Payment') {
+      print("Redirecting to payment form. Amount: $totalAmount");
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentForm(orderID: null, amount: totalAmount),
+        ),
+      );
+
+      setState(() {
+        _isProcessing = false;
+      });
+      return;
+    }
+
+    // 🛒 If payment method is NOT "Online Payment", proceed to place the order
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -160,38 +182,25 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
           key: 'tracking_order_id', value: orderId.toString());
       print('Tracking Order ID saved: $orderId');
 
-      Navigator.pop(context); // Close the loading dialog
+      Navigator.pop(context); // Close loading dialog
 
       _updateOrderStatusInFirebase(orderId.toString(), 0);
 
-      // Navigate based on payment method
-      String totalAmount = cartController.calculateTotal();
-
       cartController.clearCart();
-      if (paymentController.selectedPaymentMethod.value == 'Online Payment') {
-        print("amount mo boy $totalAmount");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                PaymentForm(orderID: orderId, amount: totalAmount),
-          ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OrderSuccessScreen()),
-        );
-      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OrderSuccessScreen()),
+      );
     } catch (e) {
-      Navigator.pop(context); // Close the loading dialog
+      Navigator.pop(context); // Close loading dialog
       print("Error placing order: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to place order.")),
       );
     } finally {
       setState(() {
-        _isProcessing = false; // Enable the button again
+        _isProcessing = false;
       });
     }
   }
@@ -229,8 +238,13 @@ class _PlaceOrderCardState extends State<PlaceOrderCard> {
                       color: Colors.white,
                       strokeWidth: 2,
                     )
-                  : const Text("Place Order"),
-            ),
+                  : Obx(() => Text(
+                        paymentController.selectedPaymentMethod.value ==
+                                'Online Payment'
+                            ? "Proceed"
+                            : "Place Order",
+                      )),
+            )
           ],
         ),
       ),

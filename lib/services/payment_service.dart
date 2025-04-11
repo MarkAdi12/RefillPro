@@ -62,6 +62,43 @@ class PaymentService {
     }
   }
 
+  static Future<bool> resubmit({
+    required int paymentId,
+    required File proofFile,
+    required String token,
+  }) async {
+    try {
+      var request = http.MultipartRequest("POST", Uri.parse(apiUrl))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['payment_id'] = paymentId.toString()
+        ..fields['status'] = "0";
+
+      // Attach proof file
+      if (proofFile.path.isNotEmpty) {
+        request.files
+            .add(await http.MultipartFile.fromPath('proof', proofFile.path));
+      }
+
+      var response = await request.send();
+      String responseBody = await response.stream.bytesToString();
+      print("📤 Response Body: $responseBody");
+
+      // Accept both 200 OK and 201 Created as successful
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("✅ Payment resubmitted successfully!");
+        return true;
+      } else {
+        print(
+            "❌ Failed to resubmit payment. Status Code: ${response.statusCode}");
+        print("❌ Response: $responseBody");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Error resubmitting payment: $e");
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>?> getPayment(
       String accessToken, int orderId) async {
     final response = await http.get(

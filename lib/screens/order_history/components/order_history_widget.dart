@@ -36,8 +36,8 @@ class OrderHistoryWidgets {
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            final truncatedName = item['name'].length > 30
-                ? "${item['name'].substring(0, 30)}..."
+            final truncatedName = item['name'].length > 25
+                ? "${item['name'].substring(0, 25)}..."
                 : item['name'];
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -50,7 +50,7 @@ class OrderHistoryWidgets {
                   ),
                 ),
                 Text(
-                  "₱${item['price'].toStringAsFixed(2)}",
+                  "PHP ${item['price'].toStringAsFixed(2)}",
                   style: const TextStyle(
                     fontSize: 16,
                     color: Colors.black,
@@ -78,7 +78,7 @@ class OrderHistoryWidgets {
                   color: Colors.black),
             ),
             Text(
-              "₱${subtotal.toStringAsFixed(2)}",
+              "PHP ${subtotal.toStringAsFixed(2)}",
               style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
           ],

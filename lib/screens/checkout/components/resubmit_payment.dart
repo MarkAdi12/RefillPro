@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:customer_frontend/screens/checkout/components/order_success.dart';
+import 'package:customer_frontend/screens/init_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -10,16 +11,16 @@ import '../../../controller/cart_controller.dart';
 import '../../../services/order_service.dart';
 import '../../../services/payment_service.dart';
 
-class PaymentForm extends StatefulWidget {
+class ResubmitPayment extends StatefulWidget {
   final String amount;
-  final int? orderID;
-  const PaymentForm({super.key, this.orderID, required this.amount});
+  final int? paymentId; // Receive amount as a parameter
+  const ResubmitPayment({super.key, this.paymentId, required this.amount});
 
   @override
-  State<PaymentForm> createState() => _PaymentFormState();
+  State<ResubmitPayment> createState() => _ResubmitPaymentState();
 }
 
-class _PaymentFormState extends State<PaymentForm> {
+class _ResubmitPaymentState extends State<ResubmitPayment> {
   final PaymentController paymentController = Get.put(PaymentController());
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   bool isSubmitting = false;
@@ -69,29 +70,17 @@ class _PaymentFormState extends State<PaymentForm> {
       return;
     }
 
-    int? orderID = widget.orderID;
+    int? paymentsID = widget.paymentId;
 
-    // ✅ Step 1: If there's no order ID, place the order first
-    if (orderID == null) {
-      orderID = await placeOrder(token);
-      if (orderID == null) {
-        Get.snackbar("Error", "Failed to place order.",
-            backgroundColor: Colors.red, colorText: Colors.white);
-        setState(() {
-          isSubmitting = false;
-        });
-        return;
-      }
+    if (paymentsID == null) {
+      print("❌ Error: paymentId is null ");
+      return; // Exit the function to prevent calling resubmit with null values
     }
 
-    bool success = await PaymentService.submitPayment(
-      orderId: orderID,
-      amount: widget.amount,
+    bool success = await PaymentService.resubmit(
+      paymentId: paymentsID, // No need for .toInt(), it's already an int
       proofFile: paymentController.selectedFile.value!,
       token: token,
-      paymentMethod: '1',
-      remarks: '',
-      refCode: '',
     );
 
     if (success) {
@@ -107,31 +96,11 @@ class _PaymentFormState extends State<PaymentForm> {
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => OrderSuccessScreen()),
+        MaterialPageRoute(
+            builder: (context) => InitScreen(
+                  initialIndex: 1,
+                )),
       );
-    }
-  }
-
-  Future<int?> placeOrder(String token) async {
-    try {
-      String? accessToken = await _secureStorage.read(key: 'access_token');
-      if (accessToken == null) {
-        print("No access token found!");
-      }
-      int? newOrderID = await PlaceOrderService.placeOrder(accessToken!);
-
-      if (newOrderID != null) {
-        print("✅ Order placed successfully! Order ID: $newOrderID");
-        await _secureStorage.write(
-            key: 'tracking_order_id', value: newOrderID.toString());
-        print('Tracking Order ID saved: $newOrderID');
-        cartController.clearCart();
-      }
-
-      return newOrderID;
-    } catch (e) {
-      print("❌ Error placing order: $e");
-      return null;
     }
   }
 
@@ -140,7 +109,7 @@ class _PaymentFormState extends State<PaymentForm> {
     print(widget.amount);
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Upload Payment Proof"),
+        title: const Text("ReUpload Payment Proof"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -177,7 +146,7 @@ class _PaymentFormState extends State<PaymentForm> {
                       : submitPayment,
                   child: isSubmitting
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Submit Payment & Place Order"),
+                      : const Text("Reupload Proof of Payment"),
                 )),
             const SizedBox(height: 10),
             const SizedBox(height: 40),

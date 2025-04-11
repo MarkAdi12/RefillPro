@@ -111,20 +111,7 @@ class _CartScreenState extends State<CartScreen> {
                           ],
                         ),
                         Divider(thickness: 1, color: Colors.grey[400]),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Subtotal',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            Text(
-                              '₱${calculateTotal()}',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
+                       
                         SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -134,7 +121,7 @@ class _CartScreenState extends State<CartScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                             Text(
-                              '₱${calculateTotal()}',
+                              'PHP ${calculateTotal()}',
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),

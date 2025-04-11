@@ -5,6 +5,8 @@ import 'package:customer_frontend/constants.dart';
 import 'package:customer_frontend/screens/cart/cart_screen.dart';
 import 'package:customer_frontend/screens/ordering/order.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../controller/cart_controller.dart';
 import 'components/item_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? _address;
+  final CartController cartController = Get.find();
 
   @override
   void initState() {
@@ -69,9 +72,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => const CartScreen()),
               );
             },
-            icon: const Icon(
-              Icons.shopping_cart_rounded,
-              size: 23,
+            icon: Obx(
+              () => cartController.cartItems.isEmpty
+                  ? const Icon(Icons.shopping_cart_rounded, size: 23)
+                  : Badge.count(
+                      count: cartController.cartItems.length,
+                      child: const Icon(
+                        Icons.shopping_cart_rounded,
+                        size: 23,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -99,8 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 8),
                 Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Aligns text to the left
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
                       onTap: () {
@@ -147,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Container(
-                        width: double.infinity,                  
+                        width: double.infinity,
                         decoration: BoxDecoration(
                           color: Colors.white,
                         ),

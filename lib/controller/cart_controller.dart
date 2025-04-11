@@ -1,11 +1,43 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:customer_frontend/services/item_service.dart';
 
 class CartController extends GetxController {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   var cartItems = <Map<String, dynamic>>[].obs;
   var remarks = "".obs;
   var isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadCartItems();
+  }
+
+  Future<void> _loadCartItems() async {
+    try {
+      final cartData = await _secureStorage.read(key: 'cart_items');
+      if (cartData != null) {
+        final List<dynamic> decoded = json.decode(cartData);
+        cartItems.assignAll(decoded.cast<Map<String, dynamic>>());
+      }
+    } catch (e) {
+      print('Error loading cart items: $e');
+    }
+  }
+
+  Future<void> _saveCartItems() async {
+    try {
+      await _secureStorage.write(
+        key: 'cart_items',
+        value: json.encode(cartItems),
+      );
+    } catch (e) {
+      print('Error saving cart items: $e');
+    }
+  }
 
   void addToCart(Map<String, dynamic> product) {
     final index =
@@ -22,20 +54,19 @@ class CartController extends GetxController {
       };
       cartItems.add(newProduct);
     }
+    _saveCartItems();
     printOrderedItems();
   }
 
-  // Reorder items from order history
   Future<bool> reorder(List<Map<String, dynamic>> orderItems) async {
-    isLoading.value = true; // Start loading
-
+    isLoading.value = true;
     final ItemService itemService = ItemService();
-    String? token = await FlutterSecureStorage().read(key: 'access_token');
+    String? token = await _secureStorage.read(key: 'access_token');
 
     if (token == null) {
       print("⚠️ No authentication token found.");
       isLoading.value = false;
-      return false; // Return false if no token
+      return false;
     }
 
     List<dynamic> latestItems = await itemService.getItems(token);
@@ -58,8 +89,7 @@ class CartController extends GetxController {
           cartItems.indexWhere((cartItem) => cartItem['id'] == item['id']);
       int maxLimit =
           item['name'].toLowerCase().contains('water bottle') ? 100 : 20;
-      int stockLimit =
-          latestItem['stock'] ?? maxLimit; // Use stock as the limit
+      int stockLimit = latestItem['stock'] ?? maxLimit;
       int limit = (stockLimit < maxLimit) ? stockLimit : maxLimit;
       int newQuantity = item['quantity'];
 
@@ -93,8 +123,9 @@ class CartController extends GetxController {
       }
     }
 
+    await _saveCartItems();
     isLoading.value = false;
-    return !itemNotFound; // Return false if any item was not found
+    return !itemNotFound;
   }
 
   int getQuantity(int productId) {
@@ -115,6 +146,7 @@ class CartController extends GetxController {
   void removeFromCart(int index) {
     if (index >= 0 && index < cartItems.length) {
       cartItems.removeAt(index);
+      _saveCartItems();
       update();
     }
   }
@@ -125,16 +157,18 @@ class CartController extends GetxController {
 
   String calculateTotal() {
     double totalPrice = cartItems.fold(
-        0,
-        (sum, item) =>
-            sum +
-            (double.tryParse(item['price'].toString()) ?? 0) *
-                (item['quantity'] as int));
+      0,
+      (sum, item) =>
+          sum +
+          (double.tryParse(item['price'].toString()) ?? 0) *
+              (item['quantity'] as int),
+    );
     return totalPrice.toStringAsFixed(2);
   }
 
   void clearCart() {
     cartItems.clear();
+    _secureStorage.delete(key: 'cart_items');
     update();
   }
 
@@ -145,16 +179,24 @@ class CartController extends GetxController {
 
       int maxLimit = itemName.toLowerCase().contains("water bottle") ? 100 : 20;
 
-      // Log current quantity and limit for debugging
       print(
           "🛒 Item: $itemName | Current Qty: $currentQuantity | Limit: $maxLimit");
 
       if (currentQuantity >= maxLimit) {
         print(" Cannot add more. Reached limit of $maxLimit.");
-        return; // Stop increasing if limit is reached
+        return;
       }
 
       cartItems[index]['quantity'] += 1;
+      _saveCartItems();
+      update();
+    }
+  }
+
+  void updateQuantity(int index, int newQuantity) {
+    if (index >= 0 && index < cartItems.length) {
+      cartItems[index]['quantity'] = newQuantity;
+      _saveCartItems();
       update();
     }
   }
@@ -167,6 +209,7 @@ class CartController extends GetxController {
         cartItems.removeAt(index);
       }
 
+      _saveCartItems();
       update();
     }
   }

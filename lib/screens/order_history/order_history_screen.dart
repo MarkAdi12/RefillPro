@@ -184,24 +184,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                       order['orderItems']),
                                   const Divider(
                                       thickness: 1, color: Colors.grey),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Subtotal:',
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black),
-                                      ),
-                                      Text(
-                                        '₱${subtotal.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            fontSize: 15, color: Colors.black),
-                                      ),
-                                    ],
-                                  ),
+                                
                                   OrderHistoryWidgets.buildTotalSection(
                                       subtotal),
                                   const SizedBox(height: 8),

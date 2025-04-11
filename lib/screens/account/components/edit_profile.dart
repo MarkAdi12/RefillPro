@@ -71,6 +71,7 @@ class _EditProfileState extends State<EditProfile> {
     });
   }
 
+
   // PREDICTIONS
   Future<void> _getPlacePredictions(String input) async {
     final double latitude = 14.7168117;

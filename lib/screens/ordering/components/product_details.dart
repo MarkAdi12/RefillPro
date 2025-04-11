@@ -175,7 +175,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '₱${widget.product['price']}',
+                              'PHP ${widget.product['price']}',
                               style: const TextStyle(
                                   fontSize: 18, color: Colors.white),
                             ),
@@ -206,7 +206,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     color: Colors.white),
                               ),
                               SizedBox(width: 6),
-                              GestureDetector(
+                              InkWell(
                                 onTap: () {
                                   showDialog(
                                     context: context,
@@ -275,13 +275,19 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     },
                                   );
                                 },
-                                child: Text(
-                                  '$quantity',
-                                  style: const TextStyle(
-                                      fontSize: 16, color: Colors.white),
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Text(
+                                    '$quantity',
+                                    style: const TextStyle(
+                                        fontSize: 16, color: Colors.white),
+                                  ),
                                 ),
                               ),
-                                SizedBox(width: 6,),
+                              SizedBox(
+                                width: 6,
+                              ),
                               IconButton(
                                 onPressed: widget.product['stock'] > 0
                                     ? () {

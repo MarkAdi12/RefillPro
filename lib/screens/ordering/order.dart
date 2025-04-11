@@ -236,7 +236,7 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '₱ ${product['price']}',
+            'PHP ${product['price']}',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
         ],

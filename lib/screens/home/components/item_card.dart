@@ -89,7 +89,7 @@ class ItemCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '₱$price',
+                          'PHP $price',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

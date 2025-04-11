@@ -207,7 +207,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       });
 
       print("✅ Tracking Order Updated: $_trackingOrder");
-      print("Payment Mo Gago $_paymentData");
+      print("Payment Mo Po $_paymentData");
 
       _listenToOrderUpdates(); // Add this line
       print(
@@ -358,9 +358,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               : SingleChildScrollView(
                   child: Column(
                     children: [
-                      int.parse(_trackingOrder!['status']) == 0 ||
-                              int.parse(_trackingOrder!['status']) == 1 ||
-                              int.parse(_trackingOrder!['status']) == 2
+                      int.parse(_trackingOrder!['status']) == 0 || // gif if not intransit
+                              int.parse(_trackingOrder!['status']) == 1 ||// gif if not intransit
+                              int.parse(_trackingOrder!['status']) == 2 // gif if not intransit
                           ? Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Image.asset("assets/prepairing.gif",
